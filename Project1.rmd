@@ -102,11 +102,89 @@ var(multinormal.sample) #NOE GALT HER
 
 #Problem B: The gamma distribution
 
-##1)
+##1) Rejection sampling
+The acceptance probability in the rejection sampling algorithm is 
+$$
+\alpha=\frac{1}{c}\frac{f(x)}{g(x)}=\begin{cases}e^{-x}, & 0<x<1 \\ x^{\alpha -1}, & 1 \leq x \end{cases}
+$$
+```{r, include=TRUE}
+k <- function(a){
+  return (a*exp(1)/(a+exp(1)))
+}
+f <- function(x, a){ 
+  return (1/gamma(a)*x^(a-1)*exp(-x))
+}
 
-##2)
+c <- function(a){
+  return (1/(k(a)*gamma(a)))
+}
 
-##3)
+random.g <- function(n,a){
+  c <- a*exp(1)/(a+exp(1))
+  u <- runif(n)
+  x <- rep(0,n)
+  for (i in 1:n){
+    if (u[i]<c/a){
+      x[i] <- (a*u[i]/c)^(1/a)
+    }
+    else{
+      x[i] <- (-log(1/a + exp(-1) - u[i]/c))
+    }
+  }
+  return(x)
+}
+
+```
+```{r, include=TRUE}
+#Acceptance probability
+alpha <- function(x,a){ 
+  if (x<1)
+      return (exp(-x))
+    else 
+      return (x^(a-1))
+}
+
+# Function that generates a sample from f  
+f1 <- function(a){ 
+  finish = 0
+  while(finish==0)
+  {  
+    ## Sample from the proposal distribution, g(x) (x>=0)
+    sample.x = random.g(1,a)
+    ## Compute the acceptance probability alpha
+    alpha=alpha(sample.x,a)
+    ## Generate a helping variable U from a uniform(0,1)
+    u = runif(1, 0, 1)
+    ## Check if we accept it
+    if(u <= alpha){
+      x=sample.x #kan kanskje bare returnere her? 
+      finish=1
+    }
+  }
+  return (x)
+}
+
+# Function that generates a vector of n independent samples from f
+samplef <- function(n,a){
+  x=rep(0,n)
+  for (i in 1:n){
+    x[i]=f1(a)
+  }
+  return (x)
+}
+
+#Test the function
+nsamples=10000
+test=samplef(nsamples,0.5)
+var=var(test) #=alpha
+mean=mean(test) 
+hist(test)
+mean
+var
+```
+##2) Ratio of uniforms method 
+
+##3) Gamma distribution with parameters α and β
 
 #Problem C: The Dirichlet distribution: simulation using known relations
 
