@@ -14,10 +14,86 @@ knitr::opts_chunk$set(echo = TRUE)
 ##1)
 
 ```{r, include=TRUE}
+#This function returns a vector of n independent samples from the exponential distribution with rate parameter lam, generated from the inverse cumulative distribution. 
 random.exp <- function(n,lam){
-  return( - 1 / lam * log(runif(n)))
+  return(-1/lam * log(runif(n)))
 }
+
+#Testing function
+lam <- 3
+exp.sample <- random.exp(10000,lam)
+#Empirical mean and variance
+mean(exp.sample)
+var(exp.sample)
+#Analytical mean and variance
+1/lam
+1/lam^2
 ```
+
+```{r, include=TRUE}
+#This function returns a vector of n independent samples from the g distribution with parameter a, generated from the inverse cumulative distribution. 
+random.g <- function(n,a){
+  c <- a*exp(1)/(a+exp(1))
+  u <- runif(n)
+  x <- rep(0,n)
+  for (i in 1:n){
+    if (u[i]<c/a){
+      x[i] <- (a*u[i]/c)^(1/a)
+    }
+    else{
+      x[i] <- (-log(1/a + exp(-1) - u[i]/c))
+    }
+  }
+  return(x)
+}
+
+#Testing funtion
+a <- .6
+g.sample <- random.g(10000, a)
+#empirical mean and variance
+mean(g.sample)
+var(g.sample)
+#analytical mean and variance
+c <- a*exp(1)/(a+exp(1))
+c/(a+1)+2*c*exp(-1)
+c*(1/(a+2)+ 5*exp(-1)) - a.mean^2
+```
+
+```{r, include=TRUE}
+#This function returns a vector of n independent samples from the standard normal distribution, generated from by the Box-Müller algorithm
+random.norm <- function(n){
+  x1 <- runif(n)*2*pi
+  x2 <- random.exp(n,.5)
+  return(sqrt(x2)*cos(x1))
+}
+
+#Testing function
+normal.sample <- random.norm(10000)
+mean(normal.sample)
+var(normal.sample)
+```
+
+```{r}
+#This function returns a sample from the d-variate normal distribution with mean mu and covariance S, transformed from standard normal samples. 
+random.multinorm <- function(d,mu,S){
+  x <- random.norm(d)
+  A <- chol(S)
+  return(mu + A%*%x)
+}
+
+#Testing function
+d = 2
+N = 10000
+sigma <- cbind(c(2,1), c(1,2))
+mu <- c(2,1)
+multinormal.sample <- matrix(NA,N,d)
+for (i in 1:N){
+  multinormal.sample[i,] <- random.multinorm(d, mu, sigma)
+}
+colMeans(multinormal.sample)
+var(multinormal.sample) #NOE GALT HER
+```
+
 ##2)
 
 ##3)

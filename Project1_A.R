@@ -45,13 +45,17 @@ normal.sample <- random.norm(10000)
 mean(normal.sample)
 var(normal.sample)
 
+#Testing multinormal
 d = 2
 N = 10000
-sigma <- cbind(c(2,.5), c(2,5))
+sigma <- cbind(c(2,1), c(1,2))
 mu <- c(2,1)
 multinormal.sample <- matrix(NA,N,d)
 for (i in 1:N){
   multinormal.sample[i,] <- random.multinorm(d, mu, sigma)
 }
 colMeans(multinormal.sample)
-cov(multinormal.sample)
+var(multinormal.sample)
+sigma
+hist(multinormal.sample[,1])
+hist(multinormal.sample[,2])
