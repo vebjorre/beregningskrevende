@@ -1,8 +1,49 @@
 ---
-title: "Project1"
+title: "Computer Intensive Statistical Methods-Exercise 1"
+author: "Vebjørn Rekkebo, Camilla Karlsen"
+date: "`r format(Sys.time(), '%d.%m.%Y')`"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+#Problem A: Stochastic simulation by the probability integral transform and bivariate techniques
+
+##1)
+
+```{r, include=TRUE}
+random.exp <- function(n,lam){
+  return( - 1 / lam * log(runif(n)))
+}
+```
+##2)
+
+##3)
+
+##4)
+
+#Problem B: The gamma distribution
+
+##1)
+
+##2)
+
+##3)
+
+#Problem C: The Dirichlet distribution: simulation using known relations
+
+##1)
+
+##2)
+
+#Problem D: Rejection sampling and importance sampling
+
+##1)
+
+##2)
+
+##3)
+
+##4)
