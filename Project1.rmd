@@ -91,7 +91,7 @@ for (i in 1:N){
   multinormal.sample[i,] <- random.multinorm(d, mu, sigma)
 }
 colMeans(multinormal.sample)
-var(multinormal.sample) #NOE GALT HER
+var(multinormal.sample)
 ```
 
 ##2)
