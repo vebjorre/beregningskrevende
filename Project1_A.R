@@ -4,16 +4,16 @@ random.exp <- function(n,lam){
   return( - 1 / lam * log(runif(n)))
 }
 
-random.g <- function(n,a){
-  c <- a*exp(1)/(a+exp(1))
+random.g <- function(n,alpha){
+  c <- alpha*exp(1)/(alpha+exp(1))
   u <- runif(n)
   x <- rep(0,n)
   for (i in 1:n){
-    if (u[i]<c/a){
-      x[i] <- (a*u[i]/c)^(1/a)
+    if (u[i]<c/alpha){
+      x[i] <- (alpha*u[i]/c)^(1/alpha)
     }
     else{
-      x[i] <- (-log(1/a + exp(-1) - u[i]/c))
+      x[i] <- (-log(1/alpha + exp(-1) - u[i]/c))
     }
   }
   return(x)
@@ -25,10 +25,17 @@ random.norm <- function(n){
   return(sqrt(x2)*cos(x1))
 }
 
-random.multinorm <- function(n,mu,S){
+random.multinorm <- function(n,mu,Sigma){
   x <- random.norm(n)
-  A <- chol(S)
-  return(mu + A%*%x)
+  A <- chol(Sigma)
+  return(mu + t(A)%*%x)
+}
+
+random.dirichlet <- function(alpha){
+  K <- length(alpha)
+  z <- rgamma(K,alpha,1) #n,shape,rate
+  v <- sum(z)
+  return (z/v)
 }
 
 # testing g:
@@ -59,3 +66,22 @@ var(multinormal.sample)
 sigma
 hist(multinormal.sample[,1])
 hist(multinormal.sample[,2])
+
+K <- 10
+N_dir <- 1000
+alpha <- rep(0.5,K)
+dirichlet.sample <- matrix(NA,N_dir,K)
+for (i in 1:N_dir){
+  dirichlet.sample[i,] <- random.dirichlet(alpha)
+  
+}
+mean(dirichlet.sample)
+var(dirichlet.sample)
+# vardir <- rep(NA,K)
+# for (i in 1:K){
+#   vardir[i] <- var(dirichlet.sample[,i])
+# }
+vardir
+alphasum <- sum(alpha)
+alpha1 <- alpha/alphasum
+alpha1*(1-alpha)/(1+alphasum)
