@@ -77,11 +77,74 @@ for (i in 1:N_dir){
 }
 mean(dirichlet.sample)
 var(dirichlet.sample)
-# vardir <- rep(NA,K)
-# for (i in 1:K){
-#   vardir[i] <- var(dirichlet.sample[,i])
-# }
-vardir
 alphasum <- sum(alpha)
 alpha1 <- alpha/alphasum
 alpha1*(1-alpha)/(1+alphasum)
+
+f <- function(theta){
+  return ((2+theta)^125*(1-theta)^(18+20)*theta^34)
+}
+  
+logf <- function(theta){
+  return (log((2+theta)^125*(1-theta)^(18+20)*theta^34))
+}
+
+cf <- function(theta){
+  return ((2+theta)^125*(1-theta)^(18+20)*theta^34) / f(15/394+sqrt(53809)/394)
+}
+
+theta_new_f <- function(theta){
+  return (theta*new_f(theta))
+}
+
+new_f <- function(theta){
+  return (((2+theta)^125*(1-theta)^(18+20)*theta^34)/as.numeric(integrate(f,0,1)[1]))
+}
+
+
+random.multinomial <- function(n){
+  x.out <- rep(NA,n)
+  rejections <- 0
+  for (i in 1:n){
+    finished <- FALSE
+    c <- f(15/394+sqrt(53809)/394)
+    while(!finished){
+      u <- runif(1)
+      x <- runif(1)
+      alpha <- f(x) / c
+      if (u <= alpha){
+        finished <- TRUE
+      }
+      else{
+        rejections = rejections + 1
+      }
+    }
+    x.out[i] <- x
+  }
+  cat(rejections,"rejections out of",(n+rejections),"trials.(",(rejections)/(n+rejections)*100, "% )")
+  return (x.out)
+}
+
+importance_sampling <- function(n){
+  x <- random.multinomial(n)
+  mu <- sum(x*(1-x)^4/f(x))/sum((1-x)^4/f(x))
+  return(mu)
+}
+
+c <- f(15/394+sqrt(53809)/394)
+
+test <- random.multinomial(10000)
+mean(test)
+var(test)
+hist(test, prob=TRUE)
+xlin <- seq(0,1,.01)
+lines(new_f(xlin))
+curve(new_f,0,1)
+
+
+newc <- integrate(f, 0, 1)
+integrate(theta_new_f,0,1)
+
+
+test2 <- importance_sampling(10000)
+test2
