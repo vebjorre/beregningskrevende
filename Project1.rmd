@@ -185,8 +185,8 @@ logf <- function(u,alpha){ #log of f* with u=log(x)
 }
 
 sample <- function(ab){ #This function sample from the distribution of log(x), using the invers of the cumulative distribution. 
-  u=runif(1,0,1)
-  return (log(ab*u))
+  u=log(runif(1,0,1))
+  return (ab+u)
 }
 ```
 
@@ -195,15 +195,16 @@ sample <- function(ab){ #This function sample from the distribution of log(x), u
 random.gamma2 <- function(n,alpha){
   count=0 #count how many tries the algorithm needs to generate n realisations
   x=rep(0,n)
-  a=sqrt((alpha-1)^(alpha-1)*exp(-alpha+1)) 
-  b=sqrt((alpha+1)^(alpha+1)*exp(-alpha-1))
+  a=log(((alpha-1)/exp(1))^((alpha-1)/2))
+  b=log(((alpha+1)/exp(1))^((alpha+1)/2))
   for (i in 1:n){
     inside=FALSE
     while (inside==FALSE){
       u1=sample(a) 
       u2=sample(b)
       u=u2-u1
-      inside=0.5*logf(u,alpha)>=u1 
+      test=0.5*logf(u,alpha)
+      inside=test>=u1 
       count=count+1
     }
     x[i] = u
@@ -212,7 +213,7 @@ random.gamma2 <- function(n,alpha){
 }
 
 #Testing function 
-alpha=10 #FUNKER IKKE FOR ALPHA>140......
+alpha=300 #FUNKER IKKE FOR ALPHA>300......
 ex.gamma2=random.gamma2(1000,alpha)
 cat("Empirical mean:",mean(ex.gamma2[-1]), "Analytical mean:",alpha, "\n")
 cat("Empirical variance:", var(ex.gamma2[-1]), "Analytical variance:",alpha,"\n")
@@ -221,7 +222,7 @@ hist(ex.gamma2[-1])
 #Generate a plot with values of alpha on the x-axis and the number of tries used on the y-axis. 
 plot.count <- function(nsample, n){
   count=rep(0,n)
-  alp=seq(1,140,length.out=n)
+  alp=seq(1,300,length.out=n)
   for (i in 1:n){
     alpha=alp[i]
     c=random.gamma2(nsample,alpha)[1]
@@ -229,7 +230,7 @@ plot.count <- function(nsample, n){
   }
   plot(alp,count)
 }
-plot.count(1000,10)
+plot.count(1000,30)
 ```
 From the plot we can see that the number of tries the algorithm needs to generate $n=1000$ realisations increases almost linearly with the value of $\alpha$. SJEKK DETTE ETTER AT VI FÅR PLOTTET FOR ALLE ALPHA
 
