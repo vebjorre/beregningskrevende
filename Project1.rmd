@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Problem A: Stochastic simulation by the probability integral transform and bivariate techniques
+# Problem A: Stochastic simulation by the probability integral transform and bivariate techniques
 
 ```{r, include=TRUE}
 #This function returns a vector of n independent samples from the exponential distribution with rate parameter lam, generated from the inverse cumulative distribution. 
@@ -104,7 +104,7 @@ var(multinormal.sample)
 ```
 
 
-#Problem B: The gamma distribution
+# Problem B: The gamma distribution
 First, we consider the gamma distribution with parameters $\alpha \in (0,1)$ and $\beta=1$. To generate samples from $f(x)$, we use rejection sampling with $g(x)$ as proposal density. We need to find a $k>1$ such that $k\geq\frac{f(x)}{g(x)}$.
 $$
 \frac{f(x)}{g(x)}=\begin{cases}\frac{1}{c\Gamma(\alpha)}e^{-x}, & 0<x<1 \\ \frac{1}{c\Gamma(\alpha)}x^{\alpha -1}, & 1 \leq x \end{cases}\leq \frac{1}{c\Gamma(\alpha)}=k
@@ -265,7 +265,8 @@ test.gamma(10000,alpha=1,beta=3)
 test.gamma(10000,alpha=4,beta=10)
 ```
 
-#Problem C: The Dirichlet distribution: simulation using known relations
+# Problem C: The Dirichlet distribution: simulation using known relations
+
 Let $x=(x_1,\dots,x_K)$ be a vector of stochastic random variables where $x_k\in[0,1]$ for $k=1,\dots,K$ and $\sum_{k=1}^Kx_k=1$. 
 We assume $z_k\sim \mathrm{gamma}(\alpha_k,1)$ independently for $k=1,\dots,K$. The joint distribution is then given by 
 
@@ -275,11 +276,11 @@ f_Z(z_1,\dots,z_K) =
 \frac{1}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K}z_k^{\alpha_k-1} \dot{} e^{-\sum_{k=1}^Kz_k}.
 $$
 
-Let $v=\sum_{i=1}^K$ and $x_k=\frac{z_k}{z_1,\dots,z_K} = \frac{z_k}{v}$. Then $z_k = g^{-1}(x_k,v) = vx_k$ and because the $x_i$ sum to 1, the K-th variable can be written as $z_K=1-\sum_{k=1}^{K-1}x_i$. We can now find the Jacobian 
+Let $v=\sum_{i=1}^Kz_i$ and $x_k=\frac{z_k}{z_1,\dots,z_K} = \frac{z_k}{v}$. Then $z_k = g^{-1}(x_k,v) = vx_k$ and because the $x_i$ sum to 1, the K-th variable can be written as $z_K=(1-\sum_{k=1}^{K-1}x_i)v$. We can now find the Jacobian 
 
 \begin{align*}
-\left\lvert \frac{\partial z_1, \dots,z_K}{\partial x_1,\dots,x_{K-1},v} \right\rvert 
-&=\left\lvert \frac{\partial vx_1, \dots,vx_{K-1}, v(1-\sum_{k=1}^{K-1}x_k)}{\partial x_1,\dots,x_{K-1},v} \right\rvert \\
+\left\lvert \frac{\partial (z_1, \dots,z_K)}{\partial (x_1,\dots,x_{K-1},v)} \right\rvert 
+&=\left\lvert \frac{\partial (vx_1, \dots,vx_{K-1}, v(1-\sum_{k=1}^{K-1}x_k))}{\partial (x_1,\dots,x_{K-1},v)} \right\rvert \\
 
 &= 
 \begin{vmatrix}
@@ -304,24 +305,23 @@ Thus, by the transformation formula we get the joint distribution
 
 \begin{align}
 f_{X,V}(x_1,\dots,x_{K-1},v)
-&= f_Z(vx_1,\dots,vx_{K-1},v(1-\sum_{k=1}^{K-1}x_k)) \dot{} \left\lvert \frac{\partial vx_1, \dots,vx_{K-1}, v(1-\sum_{k=1}^{K-1}x_k)}{\partial x_1,\dots,x_{K-1},v} \right\rvert \\
-&= \frac{1}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}(vx_k)^{\alpha_k-1} \dot{} (v(1-\prod_{k=1}^{K-1}vx_k))^{\alpha_K-1} \dot{} e^{-\sum_{k=1}^Kvx_k} \dot{} v^{K-1} \\
-&= \frac{v^{\sum_{k=1}^{K-1}(\alpha_i-1)+(\alpha_K-1)+(K-1)}e^{-v}}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} (1-\prod_{k=1}^{K-1}x_k)^{\alpha_K-1} \\
-&= \frac{v^{(\sum_{k=1}^{K}\alpha_i)-1}e^{-v}}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} (1-\prod_{k=1}^{K-1}x_k)^{\alpha_K-1}
+&= f_Z(vx_1,\dots,vx_{K-1},v\left(1-\sum_{k=1}^{K-1}x_k)\right) \dot{} \left\lvert \frac{\partial \left(vx_1, \dots,vx_{K-1}, v\left(1-\prod_{k=1}^{K-1}x_k\right)\right)}{\partial (x_1,\dots,x_{K-1},v)} \right\rvert \\
+&= \frac{1}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}(vx_k)^{\alpha_k-1} \dot{} \left(v\left(1-\prod_{k=1}^{K-1}x_k\right)\right)^{\alpha_K-1} \dot{} e^{-\sum_{k=1}^Kvx_k} \dot{} v^{K-1} \\
+&= \frac{v^{\sum_{k=1}^{K-1}(\alpha_k-1)+(\alpha_K-1)+(K-1)}e^{-v}}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1} \\
+&= \frac{v^{(\sum_{k=1}^{K}\alpha_k)-1}e^{-v}}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
 \end{align}
 
 And by integration the marginal distribution of $(x_1,\dots,x_{K-1})$ is
 $$
-f_X(x_1,\dots,x_{K-1})=  \frac{\int_0^\infty v^{(\sum_{k=1}^{K}\alpha_i)-1}e^{-v}dv}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} (1-\prod_{k=1}^{K-1}x_k)^{\alpha_K-1}
+f_X(x_1,\dots,x_{K-1})=  \frac{\int_0^\infty v^{(\sum_{k=1}^{K}\alpha_i)-1}e^{-v}dv}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
 $$
+$$= \frac{\Gamma(\sum_{k=1}^{K}\alpha_i)}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
 $$
-=f_X(x_1,\dots,x_{K-1})=  \frac{\Gamma(\sum_{k=1}^{K}\alpha_i)}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} (1-\prod_{k=1}^{K-1}x_k)^{\alpha_K-1}
-$$
-which is the Dirichlet distribution.
+which is the Dirichlet distribution. 
 
 ```{r}
 ##This function generates one realisation from Dirichlet distribution with parameter vector alpha.
-random.dirichlet <- function(alpha){#Har endret litt her. Ble det riktig? 
+random.dirichlet <- function(alpha){
   K <- length(alpha)
   z <- rep(0,K)
   for (i in 1:K)
@@ -350,9 +350,8 @@ diag(var(dirichlet.sample))
 alpha1*(1-alpha1)/(1+alphasum)
 ```
 
-#Problem D: Rejection sampling and importance sampling
+# Problem D: Rejection sampling and importance sampling
 
-##1)
 ```{r}
 f <- function(theta){
   return ((2+theta)^125*(1-theta)^(18+20)*theta^34)
