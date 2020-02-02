@@ -105,19 +105,17 @@ var(multinormal.sample)
 
 
 #Problem B: The gamma distribution
-
-##Rejection sampling
-To use rejection sampling to generate samples from $f(x)$, we need a $k>1$ such that $k\geq\frac{f(x)}{g(x)}$.
+First, we consider the gamma distribution with parameters $\alpha \in (0,1)$ and $\beta=1$. To generate samples from $f(x)$, we use rejection sampling with $g(x)$ as proposal density. We need to find a $k>1$ such that $k\geq\frac{f(x)}{g(x)}$.
 $$
 \frac{f(x)}{g(x)}=\begin{cases}\frac{1}{c\Gamma(\alpha)}e^{-x}, & 0<x<1 \\ \frac{1}{c\Gamma(\alpha)}x^{\alpha -1}, & 1 \leq x \end{cases}\leq \frac{1}{c\Gamma(\alpha)}=k
 $$
-The acceptance probability in the rejection sampling is
+Hence, the acceptance probability in the rejection sampling is
 
 $$
 \alpha=\frac{1}{k}\frac{f(x)}{g(x)}=c\Gamma(\alpha)\frac{f(x)}{g(x)}=\begin{cases}e^{-x}, & 0<x<1 \\ x^{\alpha -1}, & 1 \leq x \end{cases}.
 $$
 
-```{r, include=TRUE}
+```{r}
 #Acceptance probability
 accept_prob <- function(x,a){ 
   if (x<1)
@@ -155,7 +153,7 @@ alpha=0.5
 test.function(10000,random.gamma1,alpha,alpha,alpha)
 ```
 
-##Ratio of uniforms method 
+Now we consider the gamma distribution with parameters $\alpha>1$ and $\beta=1$. To use ratio of uniforms method to simulate from this distrubution, we need to find $C_f\subset[0,a] \times [b_-,b_+]$. 
 First we find the value of $a=\sqrt{sup_xf^*(x)}$. 
 $$
 \frac{d}{dx}f^*(x)=(\alpha-1)x^{\alpha-2}e^{-x}-e^{-x}x^{\alpha-1}=e^{-x}x^{\alpha-2}(\alpha-1-x)=0 \Rightarrow x=\alpha-1 	\lor x=0
@@ -168,8 +166,10 @@ $$
 $$
 $x^2f^*(x)$ has its maximum when $x=\alpha+1$, hence $b_+=\sqrt{(\alpha+1)f^*(\alpha+1)}=\sqrt{(\alpha+1)^{\alpha+1}e^{-\alpha-1}}$.
 
-$C_f\subset[0,a] \times [0,b_+]$
-
+To avoid overflow, we implement the algorithm on log-scale, $u=log(x)$. Hence, we define $C_f=\{ (u_1,u_2):0\leq u_1 \leq 0.5{f^*(e^{u_2-u_1})}\}$ where
+$$
+f^*(e^u)=\begin{cases} u(\alpha-1)-e^u, & 0<x \\ 0, & othetwise \end{cases}.
+$$
 
 ```{r, include=TRUE}
 a <- function(alpha){ 
@@ -180,11 +180,11 @@ b <- function(alpha){ #b+
   return (sqrt((alpha+1)^(alpha+1)*exp(-alpha-1)))
 }
 
-logf <- function(u,alpha){
+logf <- function(u,alpha){ #log of f* with u=log(x)
   return (u*(alpha-1)-exp(u))
 }
 
-sample <- function(ab){
+sample <- function(ab){ #This function sample from the distribution of log(x), using the invers of the cumulative distribution. 
   u=runif(1,0,1)
   return (log(ab*u))
 }
@@ -195,18 +195,18 @@ sample <- function(ab){
 random.gamma2 <- function(n,alpha){
   count=0 #count how many tries the algorithm needs to generate n realisations
   x=rep(0,n)
-  a=sqrt((alpha-1)^(alpha-1)*exp(-alpha+1))
+  a=sqrt((alpha-1)^(alpha-1)*exp(-alpha+1)) 
   b=sqrt((alpha+1)^(alpha+1)*exp(-alpha-1))
   for (i in 1:n){
     inside=FALSE
     while (inside==FALSE){
-      y1=sample(a) 
-      y2=sample(b)
-      y=y2-y1
-      inside=0.5*logf(y,alpha)>=y1 
+      u1=sample(a) 
+      u2=sample(b)
+      u=u2-u1
+      inside=0.5*logf(u,alpha)>=u1 
       count=count+1
     }
-    x[i] = y 
+    x[i] = u
   }
   vec=c(count,exp(x)) #count + n realisations
 }
@@ -231,20 +231,20 @@ plot.count <- function(nsample, n){
 }
 plot.count(1000,10)
 ```
+From the plot we can see that the number of tries the algorithm needs to generate $n=1000$ realisations increases almost linearly with the value of $\alpha$. SJEKK DETTE ETTER AT VI FÅR PLOTTET FOR ALLE ALPHA
 
-##Gamma distribution with parameters α and β
-$X \sim Ga(\alpha,1) \Leftrightarrow X/\beta \sim Ga(\alpha, \beta)$
+By using the above functions and $X \sim Ga(\alpha,1) \Leftrightarrow X/\beta \sim Ga(\alpha, \beta)$, we write a function that generates a vector of n independent samples from the gamma distribution with parameters $alpha$ and $\beta$. 
 ```{r}
 ##This function returns a vector of n independent samples from the gamma distribution with parameters alpha and beta. 
 random.gamma <- function(n, alpha, beta){
   if (alpha==1){
-    x=random.exp(n,alpha)
+    x=random.exp(n,alpha) #sample from exponential distribution
   }
   else if (alpha<1){
-    x=random.gamma1(n,alpha)
+    x=random.gamma1(n,alpha) 
   }
   else {
-    x=random.gamma2(n,alpha)[-1]
+    x=random.gamma2(n,alpha)[-1] #ignoring the first element, which is the number of tries. 
   }
   return (x/beta) #Transform from x-Ga(alpha,1) to x/beta-Ga(alpha,beta)
 }
@@ -420,7 +420,7 @@ importance_sampling <- function(n){ #mulig vi ikke kan bruke self-normalizing?
   mu1 <- sum(x*(1-x)^4)/sum((1-x)^4) #med f(x)=1 - prior istedenfor posterior?
   print(mu1)
   print(mean(x))
-  return(mu1)
+  return(mu)
 }
 
 test2 <- importance_sampling(10000)
