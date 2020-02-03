@@ -36,6 +36,7 @@ lam <- 3
 test.function(10000,random.exp,lam,1/lam,1/lam^2)
 
 ```
+
 The printout shows that the empirical mean and variance are close to the analitical values so the implementation seems correct.
 
 We now consider the density function 
@@ -108,6 +109,7 @@ g.mean <- c/(a+1)+2*c*exp(-1) #analytical mean
 g.var <- c*(1/(a+2)+ 5*exp(-1)) - g.mean^2 #analytical variance
 test.function(10000,random.g,a,g.mean,g.var)
 ```
+
 We can see that analytical and empirical moments coincide.
 
 The Box-Müller algorithm samples from the bivariate standard normal distribution. We first generate $x_1 \sim \mathcal{U}(0,2\pi)$ and $x_2 \sim \text{exp}(\frac{1}{2})$ and then return $y_1=\sqrt{x_2}\text{cos}(x_1)$ and $y_2=\sqrt{x_2}\text{sin}(x_1)$. We want to generate a vector of $n$ independent samples from the standard normal distribution. Thus we only keep $y_1$ from each bivariate sample.
@@ -126,6 +128,7 @@ cat("Empirical mean:", mean(ex.normal), "Analytical mean:",0.0, "\n")
 cat("Empirical variance:", var(ex.normal), "Analytical variance:",1.0,"\n")
 hist(ex.normal)
 ```
+
 The empirical mean and variance are close to the analytical values so the implementation seems correct.
 
 Now we want to sample from a d-variate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\mathbf{\Sigma}$. This is done by generating a vector $\boldsymbol{x}$ of $d$ standard normal samples and doing the transform $\boldsymbol{y}=\mathbf{A}\boldsymbol{x}+\boldsymbol{\mu}$ where $\mathbf{AA^T=\Sigma}$. We find $\mathbf{A}$ by the cholesky decomposition of $\mathbf{\Sigma}$.
@@ -204,6 +207,8 @@ alpha=0.5
 test.function(10000,random.gamma1,alpha,alpha,alpha)
 ```
 
+The printout shows that the empirical mean and variance are close to the analitical values so the implementation seems correct.
+
 Now we consider the gamma distribution with parameters $\alpha>1$ and $\beta=1$. To use ratio of uniforms method to simulate from this distrubution, we need to find $C_f\subset[0,a] \times [b_-,b_+]$. 
 First we find the value of $a=\sqrt{sup_xf^*(x)}$. 
 $$
@@ -269,7 +274,11 @@ ex.gamma2=random.gamma2(1000,alpha)
 cat("Empirical mean:",mean(ex.gamma2[-1]), "Analytical mean:",alpha, "\n")
 cat("Empirical variance:", var(ex.gamma2[-1]), "Analytical variance:",alpha,"\n")
 hist(ex.gamma2[-1])
+```
 
+The empirical mean and variance are close to the analitical values so the implementation seems correct.
+
+```{r}
 #Generate a plot with values of alpha on the x-axis and the number of tries used on the y-axis. 
 plot.count <- function(nsample, n){
   count=rep(0,n)
@@ -283,9 +292,10 @@ plot.count <- function(nsample, n){
 }
 plot.count(1000,30)
 ```
+
 From the plot we can see that the number of tries the algorithm needs to generate $n=1000$ realisations increases almost linearly with the value of $\alpha$. SJEKK DETTE ETTER AT VI FÅR PLOTTET FOR ALLE ALPHA
 
-By using the above functions and $X \sim Ga(\alpha,1) \Leftrightarrow X/\beta \sim Ga(\alpha, \beta)$, we write a function that generates a vector of n independent samples from the gamma distribution with parameters $alpha$ and $\beta$. 
+By using the above functions and $X \sim Ga(\alpha,1) \Leftrightarrow X/\beta \sim Ga(\alpha, \beta)$, we write a function that generates a vector of n independent samples from the gamma distribution with parameters $\alpha$ and $\beta$. 
 ```{r}
 ##This function returns a vector of n independent samples from the gamma distribution with parameters alpha and beta. 
 random.gamma <- function(n, alpha, beta){
