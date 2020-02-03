@@ -11,12 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Problem A: Stochastic simulation by the probability integral transform and bivariate techniques
 
+The inverse of the exponential cumulative density function with rate parameter $\lambda$ is given by 
+$$
+F^{-1}(u) = -\frac{1}{\lambda}\text{log}(u).
+$$
+Hence we can sample from the exponential distribution by generating $u\sim \mathcal{U}[0,1]$ and returning $-\frac{1}{\lambda}\text{log}(u)$.
 ```{r, include=TRUE}
 #This function returns a vector of n independent samples from the exponential distribution with rate parameter lam, generated from the inverse cumulative distribution. 
 random.exp <- function(n,lam){
   return(-1/lam * log(runif(n)))
 }
-
+```
+We know that $\text{E}(X)=\frac{1}{\lambda}$ and $\text{Var}(X)=\frac{1}{\lambda^2}$. The empirical mean is given by the average of the sample and the empirical variance is $\widehat{\text{Var}(X)}=\frac{\sum_{i=1}^n x_i}{n-1}$.
+```{r}
 #Testing function
 test.function <- function(n,func,arg,amean,avar){
   exs.sample=func(n,arg)
@@ -25,23 +32,52 @@ test.function <- function(n,func,arg,amean,avar){
   hist(exs.sample)
 }
 
-#Bruk funksjon eller ikke? 
-
 lam <- 3
-ex.exp <- random.exp(10000,lam)
-cat("Empirical mean:", mean(ex.exp), "Analytical mean:",1/lam, "\n")
-cat("Empirical variance:", var(ex.exp), "Analytical variance:",1/lam^2,"\n")
-hist(ex.exp)
-
-#test.function(10000,random.exp,lam,1/lam,1/lam^2)
+test.function(10000,random.exp,lam,1/lam,1/lam^2)
 
 ```
-HER MÅ CDF OG INVERSE LEGGES INN (2a)
-```{r, include=TRUE}
-#This function returns a vector of n independent samples from the g distribution with parameter a, generated from the inverse cumulative distribution. 
+The printout shows that the empirical mean and variance are close to the analitical values so the implementation seems correct.
 
+We now consider the density function 
+$$
+g(x) = \begin{cases} cx^{\alpha-1}, &0<x<1,\\ ce^{-x}, &1\leq x, \\ 0, &\text{otherwise,} \end{cases}
+$$
+where c is a normalising constant and $\alpha \in (0,1)$. Integration over the different intervals yields the cumulative distribution 
+$$
+G(x) = \begin{cases} \frac{c}{\alpha}x^\alpha, &0<x<1,\\ c(\alpha^{-1}+e^{-1}-e^{-x}) &1\leq x, \\ 0, &\text{otherwise}. \end{cases}
+$$
+We can now set $u=G(x)$ and solve for $x$
+$$\begin{cases} 
+u=\frac{c}{\alpha}x^\alpha &\iff
+x = (\frac{\alpha}{c}u)^{\frac{1}{\alpha}} , &0 < x < 1, \\
+u = c(\alpha^{-1}+e^{-1}-e^{-x}) &\iff x=-\text{log}(\alpha^{-1}+e^{-1}-\frac{u}{c}), &1\leq x,
+\end{cases}
+$$
+and the boundary $x=1$ is equivalent to $u=\frac{c}{\alpha}$. Hence the inverse of the cumulative distribution is
+$$
+G^{-1}(u) = 
+\begin{cases}
+(\frac{\alpha}{c}u)^{\frac{1}{\alpha}} , &0 < u < \frac{c}{\alpha}, \\
+-\text{log}(\alpha^{-1}+e^{-1}-e^{-x}), &\frac{c}{\alpha} \leq u, \\
+0, &\text{otherwise}.
+\end{cases}
+$$
+The normalising constant $c$ is found by integrating $g(x)$ over its domain and let the integral equal 1.
+$$
+\int_0^\infty g(x)dx = c(\alpha^{-1}+e^{-1})=1 \iff c =\frac{\alpha e}{\alpha+e}.
+$$
+Now we can sample from $g(x)$ by generating $u\sim \mathcal{U}[0,1]$ and returning $G^{-1}(u)$.
+
+```{r, include=TRUE}
+
+#Function for normalising constant in g distribution given parameter a (alpha).
+c.g <- function(a){
+  return (a*exp(1)/(a+exp(1)))
+}
+
+#This function returns a vector of n independent samples from the g distribution with parameter a (=alpha), generated from the inverse cumulative distribution. 
 random.g <- function(n,a){
-  c <- (a*exp(1)/(a+exp(1)))
+  c <- c.g(a) #Normalising constant
   u <- runif(n)
   x <- rep(0,n)
   for (i in 1:n){
@@ -55,20 +91,29 @@ random.g <- function(n,a){
   return(x)
 }
 
-c <- function(a){
-  return (a*exp(1)/(a+exp(1)))
-}
+```
+The analytical mean and variance of $X\sim g(x)$ are computed in the usual way 
+\begin{align}
+\text{E}(X) &=\int_0^\infty xg(x)dx=\frac{c}{\alpha+1}+\frac{2c}{e}, \\
+\text{E}(X^2) &=\int_0^\infty x^2g(x)dx=\frac{c}{\alpha+2}+\frac{5c}{e}, \\
+\text{Var}(X) &=\text{E}(X^2)-(\text{E}(X))^2 = c(\frac{1}{\alpha+2}+\frac{5}{e})-(\frac{c}{\alpha+1}+\frac{2c}{e})^2. 
+\end{align}
+
+```{r, include=TRUE}
 
 #Testing funtion
 a <- .6
-c <- c(a)
-amean <- c/(a+1)+2*c*exp(-1) #analytical mean
-avar <- c*(1/(a+2)+ 5*exp(-1)) - amean^2 #analytical variance
-test.function(10000,random.g,a,amean,avar)
+c <- c.g(a)
+g.mean <- c/(a+1)+2*c*exp(-1) #analytical mean
+g.var <- c*(1/(a+2)+ 5*exp(-1)) - g.mean^2 #analytical variance
+test.function(10000,random.g,a,g.mean,g.var)
 ```
+We can see that analytical and empirical moments coincide.
+
+The Box-Müller algorithm samples from the bivariate standard normal distribution. We first generate $x_1 \sim \mathcal{U}(0,2\pi)$ and $x_2 \sim \text{exp}(\frac{1}{2})$ and then return $y_1=\sqrt{x_2}\text{cos}(x_1)$ and $y_2=\sqrt{x_2}\text{sin}(x_1)$. We want to generate a vector of $n$ independent samples from the standard normal distribution. Thus we only keep $y_1$ from each bivariate sample.
 
 ```{r, include=TRUE}
-#This function returns a vector of n independent samples from the standard normal distribution, generated from by the Box-Müller algorithm
+#This function returns a vector of n independent samples from the standard normal distribution, generated by the Box-Müller algorithm
 random.norm <- function(n){
   x1 <- runif(n)*2*pi
   x2 <- random.exp(n,.5)
@@ -81,25 +126,31 @@ cat("Empirical mean:", mean(ex.normal), "Analytical mean:",0.0, "\n")
 cat("Empirical variance:", var(ex.normal), "Analytical variance:",1.0,"\n")
 hist(ex.normal)
 ```
+The empirical mean and variance are close to the analytical values so the implementation seems correct.
+
+Now we want to sample from a d-variate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\mathbf{\Sigma}$. This is done by generating a vector $\boldsymbol{x}$ of $d$ standard normal samples and doing the transform $\boldsymbol{y}=\mathbf{A}\boldsymbol{x}+\boldsymbol{\mu}$ where $\mathbf{AA^T=\Sigma}$. We find $\mathbf{A}$ by the cholesky decomposition of $\mathbf{\Sigma}$.
 
 ```{r}
 #This function returns a sample from the d-variate normal distribution with mean mu and covariance S, transformed from standard normal samples. 
 random.multinorm <- function(d,mu,S){
   x <- random.norm(d)
-  A <- t(chol(S)) #want lower triangular
+  A <- t(chol(S)) #transpose to get lower triangular cholesky matrix
   return(mu + A%*%x)
 }
 
 #Testing function
-d = 2
+d = 3
 N = 10000
-sigma <- cbind(c(2,1), c(1,2))
-mu <- c(2,1)
+sigma <- cbind(c(3,1,0), c(1,3,1), c(0,1,3)) #if d=3
+# sigma <- cbind(c(2,1),c(1,2))                  #if d=2
+mu <- seq(1,d)
 multinormal.sample <- matrix(NA,N,d)
 for (i in 1:N){
   multinormal.sample[i,] <- random.multinorm(d, mu, sigma)
 }
+mu
 colMeans(multinormal.sample)
+sigma
 var(multinormal.sample)
 ```
 
@@ -337,7 +388,15 @@ dirichlet.sample <- matrix(1,N_dir,K)
 for (i in 1:N_dir){
   dirichlet.sample[i,] <- random.dirichlet(alpha)
 }
-
+```
+The mean and variance of a random variable $X_i$ from a Dirichlet distribution are
+$$
+\text{E}(X_i) = \frac{\alpha_i}{\sum_{k=1}^K\alpha_k} := \tilde \alpha_i
+$$ and
+$$
+\text{Var}(X_i)=\frac{\tilde{\alpha_i}(1-\tilde \alpha_i)}{\sum_{k=1}^K\alpha_k +1}.
+$$
+```{r, inclue=TRUE}
 alphasum <- sum(alpha)
 #Empirical mean
 colMeans(dirichlet.sample)
@@ -349,6 +408,7 @@ diag(var(dirichlet.sample))
 #Analytical variance
 alpha1*(1-alpha1)/(1+alphasum)
 ```
+The empirical mean and variance are very close to the analytical values.
 
 # Problem D: Rejection sampling and importance sampling
 
