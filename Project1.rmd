@@ -35,6 +35,7 @@ test.function <- function(n,func,arg,amean,avar){
   cat("Empirical variance:", var(exs.sample), "Analytical variance:",avar,"\n")
 }
 
+#Make histogram of sample
 lam <- 3
 sample.exp <- enframe(random.exp(100000,lam))
 
@@ -54,10 +55,13 @@ ggplot() +
     aes(col='Theoretical density')
   ) +
   labs(
-    caption = 'Histogram'
+    caption = expression("Histogram of sample from exponential distribution with "*lambda*"=3 compared to theoretical density.")
   )
+```
 
+The histogram fits very well with the theoretical density function and the mean is close to $\frac{1}{\lambda}=\frac{1}{3}$ as it should be.
 
+```{r}
 test.function(10000,random.exp,lam,1/lam,1/lam^2)
 
 ```
@@ -73,7 +77,8 @@ $$
 G(x) = \begin{cases} \frac{c}{\alpha}x^\alpha, &0<x<1,\\ c(\alpha^{-1}+e^{-1}-e^{-x}) &1\leq x, \\ 0, &\text{otherwise}. \end{cases}
 $$
 We can now set $u=G(x)$ and solve for $x$
-$$\begin{cases} 
+$$
+\begin{cases} 
 u=\frac{c}{\alpha}x^\alpha &\iff
 x = (\frac{\alpha}{c}u)^{\frac{1}{\alpha}} , &0 < x < 1, \\
 u = c(\alpha^{-1}+e^{-1}-e^{-x}) &\iff x=-\text{log}(\alpha^{-1}+e^{-1}-\frac{u}{c}), &1\leq x,
@@ -96,11 +101,12 @@ Now we can sample from $g(x)$ by generating $u\sim \mathcal{U}[0,1]$ and returni
 
 ```{r, include=TRUE}
 
-#Function for normalising constant in g distribution given parameter a (alpha).
+#Function for normalising constant in g distribution given parameter a (=alpha).
 c.g <- function(a){
   return (a*exp(1)/(a+exp(1)))
 }
 
+#Normalised density function for g (for plot)
 g <- function(x, a) {
   c <- c.g(a)
   out <- rep(0, length(x))
@@ -138,11 +144,17 @@ The analytical mean and variance of $X\sim g(x)$ are computed in the usual way
 ```{r, include=TRUE}
 
 #Testing funtion
-a <- .6
-c <- c.g(a)
+a <- .6 #parameter
+c <- c.g(a) #normalising constant
 g.mean <- c/(a+1)+2*c*exp(-1) #analytical mean
 g.var <- c*(1/(a+2)+ 5*exp(-1)) - g.mean^2 #analytical variance
-# test.function(10000,random.g,a,g.mean,g.var)
+test.function(10000,random.g,a,g.mean,g.var)
+```
+
+The mean and variance of the sample is close to the theoretical values.
+
+```{r}
+#Making histogram of sample from g
 sample.g <- enframe(random.g(100000,a))
 
 ggplot() +
@@ -150,7 +162,7 @@ ggplot() +
     data = data.frame(sample.g),
     mapping = aes(x=value, y=..density..),
     binwidth = 0.01,
-    na.rm = FALSE
+    na.rm = TRUE
   ) +
   geom_vline(
     aes(xintercept=mean(sample.g$value),
@@ -162,10 +174,13 @@ ggplot() +
     aes(col='Theoretical density')
   ) +
   ylim(0,2) +
-  xlim(0,5)
+  xlim(0,5) +
+    labs(
+      caption = bquote("Histogram of sample from g-distribution with "~alpha*"=0.6 compared to theoretical density.")
+    )
 ```
 
-We can see that analytical and empirical moments coincide.
+The histogram and density function coincide and that further indicates that the implementation is correct.
 
 The Box-Müller algorithm samples from the bivariate standard normal distribution. We first generate $x_1 \sim \mathcal{U}(0,2\pi)$ and $x_2 \sim \text{exp}(\frac{1}{2})$ and then return $y_1=\sqrt{x_2}\text{cos}(x_1)$ and $y_2=\sqrt{x_2}\text{sin}(x_1)$. We want to generate a vector of $n$ independent samples from the standard normal distribution. Thus we only keep $y_1$ from each bivariate sample.
 
@@ -195,11 +210,14 @@ ggplot() +
   stat_function(
     fun = dnorm,
     aes(col='Theoretical density')
+  ) +
+  labs(
+    caption = expression("Histogram of sample from standard normal distribution compared to theoretical density.")
   )
 
 ```
 
-The empirical mean and variance are close to the analytical values so the implementation seems correct.
+The empirical mean and variance are close to the analytical values so the implementation seems correct. The histogram of the samples is also just like expected.
 
 Now we want to sample from a d-variate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\mathbf{\Sigma}$. This is done by generating a vector $\boldsymbol{x}$ of $d$ standard normal samples and doing the transform $\boldsymbol{y}=\mathbf{A}\boldsymbol{x}+\boldsymbol{\mu}$ where $\mathbf{AA^T=\Sigma}$. We find $\mathbf{A}$ by the cholesky decomposition of $\mathbf{\Sigma}$.
 
@@ -221,12 +239,17 @@ multinormal.sample <- matrix(NA,N,d)
 for (i in 1:N){
   multinormal.sample[i,] <- random.multinorm(d, mu, sigma)
 }
+#Theoretical mean vector:
 mu
+#Empirical mean vector:
 colMeans(multinormal.sample)
+#Empirical covariance matrix:
 sigma
+#Theoretical covariance matrix:
 var(multinormal.sample)
 ```
 
+We see that the empirical moments are very close to the real values.
 
 # Problem B: The gamma distribution
 First, we consider the gamma distribution with parameters $\alpha \in (0,1)$ and $\beta=1$. To generate samples from $f(x)$, we use rejection sampling with $g(x)$ as proposal density. We need to find a $k>1$ such that $k\geq\frac{f(x)}{g(x)}$.
@@ -274,11 +297,10 @@ random.gamma1 <- function(n,a){
 
 #Testing function
 alpha=0.5
-sample.gamma1 <- random.gamma1(10000,alpha)
 test.function(10000,random.gamma1,alpha,alpha,alpha)
 ```
 
-The printout shows that the empirical mean and variance are close to the analitical values so the implementation seems correct.
+The printout shows that the empirical mean and variance are close to the analytical values so the implementation seems correct.
 
 Now we consider the gamma distribution with parameters $\alpha>1$ and $\beta=1$. To use ratio of uniforms method to simulate from this distrubution, we need to find $C_f\subset[0,a] \times [b_-,b_+]$. 
 First we find the value of $a=\sqrt{sup_xf^*(x)}$. 
@@ -303,7 +325,7 @@ logf <- function(u,alpha){ #log of f* with u=log(x)
   return (u*(alpha-1)-exp(u))
 }
 
-sample <- function(ab){ #This function sample from the distribution of log(x), using the invers of the cumulative distribution. 
+sample <- function(ab){ #This function sample from the distribution of log(x), using the inverse of the cumulative distribution. 
   u=log(runif(1,0,1))
   return (ab+u)
 }
@@ -344,18 +366,28 @@ The empirical mean and variance are close to the analytical values so the implem
 #Generate a plot with values of alpha on the x-axis and the number of tries used on the y-axis. 
 plot.count <- function(nsample, n){
   count=rep(0,n)
-  alp=seq(1.01,2000,length.out=n)
+  alpha=seq(1.01,2000,length.out=n)
   for (i in 1:n){
-    alpha=alp[i]
-    c=random.gamma2(nsample,alpha)[1]
+    a=alpha[i]
+    c=random.gamma2(nsample,a)[1]
     count[i]=c
   }
-  plot(alp,count)
+  return(cbind(alpha,count))
 }
-plot.count(1000,100)
+num.trials <- plot.count(1000, 100)
+num.trials.frame <- data.frame(num.trials)
+ggplot() +
+  geom_point(
+    data=num.trials.frame,
+    mapping = aes(x=alpha, y=count)
+  ) +
+  labs(
+    caption = expression("Number of trials needed to generate 1000 samples from gamma distribution as a function of "*alpha)
+  )
+  
 ```
 
-From the plot we can see that the number of tries the algorithm needs to generate $n=1000$ realisations increases almost linearly with the value of $\alpha$. SJEKK DETTE ETTER AT VI FÅR PLOTTET FOR ALLE ALPHA
+From the plot we can see that the number of tries the algorithm needs to generate $n=1000$ realisations increases almost linearly with the value of $\alpha$.
 
 By using the above functions and $X \sim Ga(\alpha,1) \Leftrightarrow X/\beta \sim Ga(\alpha, \beta)$, we write a function that generates a vector of n independent samples from the gamma distribution with parameters $\alpha$ and $\beta$. 
 ```{r}
@@ -382,8 +414,8 @@ test.gamma <- function(n,alpha, beta){
   cat("Empirical variance:", var(ex.gamma), "Analytical variance:",avar,"\n")
 }
 
-plot.gamma <- function(n,alpha,beta){
-  sample.gamma <- enframe(random.gamma(n,alpha=alpha,beta=beta))
+plot.gamma <- function(n,alphav,betav){
+  sample.gamma <- enframe(random.gamma(n,alpha=alphav,beta=betav))
   ggplot() +
     geom_histogram(
       data = data.frame(sample.gamma),
@@ -397,15 +429,19 @@ plot.gamma <- function(n,alpha,beta){
           col='Empirical mean')
     ) +
     stat_function(
-      fun = partial(dgamma, shape=alpha, rate=beta),
+      fun = partial(dgamma, shape=alphav, rate=betav),
       aes(col='Theoretical density')
     ) +
     ylim(0,3) +
-    xlim(0,5)
+    xlim(0,5) +
+    labs(
+      caption = bquote("Histogram of sample from gamma distribution with " ~ alpha * "=" ~ .(alphav) ~ " and " ~ beta *"="* .(betav) ~ " compared to theoretical density.")
+    )
 }
-test.gamma(100000,alpha=1,beta=3)
-test.gamma(100000,alpha=1,beta=3)
-test.gamma(100000,alpha=4,beta=10)
+test.gamma(100000,0.5,0.7)
+test.gamma(100000,1,3)
+test.gamma(100000,4,10)
+
 plot.gamma(100000,0.5,0.7)
 plot.gamma(100000,1,3)
 plot.gamma(100000,4,10)
@@ -519,14 +555,6 @@ f <- function(theta){ #The proportional function
 #Find the maxima of the proportional function 
 res = optimise(f, interval = c(0,1),maximum=TRUE) 
 maxima=res$objective
-  
-logf <- function(theta){
-  return (log(f(theta)))
-}
-
-cf <- function(theta){
-  return (f(theta) / maxima)
-}
 
 theta_new_f <- function(theta){ #theta*new_f
   return (theta*new_f(theta))
@@ -543,7 +571,7 @@ random.multinomial <- function(n){
   rejections <- 0
   for (i in 1:n){
     finished <- FALSE
-    c <- maxima #res$objective  #f(15/394+sqrt(53809)/394)
+    c <- maxima #res$objective
     while(!finished){
       x <- runif(1) #sample from the proposal distribution, U(0,1)
       alpha <- f(x) / c #compute the acceptance probability alpha
@@ -564,12 +592,8 @@ random.multinomial <- function(n){
 To estimate the posterior mean of $\theta$ we use Monte-Carlo integration with M=10000 samples from $f(\theta|y)$. 
 
 ```{r}
-test <- random.multinomial(10000)
-cat("Estimated posterior mean:", mean(test), "\n")
-hist(test, prob=TRUE)
-xlin <- seq(0,1,.01)
-lines(new_f(xlin))
-curve(new_f,0,1)
+sample.multinomial <- random.multinomial(10000)
+cat("Estimated posterior mean:", mean(sample.multinomial), "\n")
 ```
 
 To check the value of the estimated posterior mean, we approximate it
@@ -615,5 +639,13 @@ ggplot() +
     geom_vline(
       aes(xintercept=mean(sample.multinomial$value),
           col='Empirical mean')
+    ) +
+    stat_function(
+      fun = new_f,
+      aes(col='Theoretical density')
+    ) +
+    labs(
+      caption = expression("Histogram of sample from the posterior distribution compared to its theoretical density.")
     )
+    
 ```
