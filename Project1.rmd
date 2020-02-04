@@ -387,7 +387,7 @@ ggplot() +
   
 ```
 
-From the plot we can see that the number of tries the algorithm needs to generate $n=1000$ realisations increases almost linearly with the value of $\alpha$.
+From the plot we can see that the number of tries the algorithm needs to generate $n=1000$ realisations increases almost logarithmic with the value of $\alpha$. The acceptance probability decreases as the value of $\alpha$ increases, since the proportion of the total area $\left[0, a\right] \times \left[0, b_+\right]$ covered by $C_f$ shrinks as $\alpha$ increases. The proportion shrinks fastest in the beginning and tapers off when alpha becomes larger. 
 
 By using the above functions and $X \sim Ga(\alpha,1) \Leftrightarrow X/\beta \sim Ga(\alpha, \beta)$, we write a function that generates a vector of n independent samples from the gamma distribution with parameters $\alpha$ and $\beta$. 
 ```{r}
@@ -563,6 +563,10 @@ theta_new_f <- function(theta){ #theta*new_f
 new_f <- function(theta){
   return (f(theta)/as.numeric(integrate(f,0,1)[1])) 
 }
+
+theta_new_f_g <- function(theta){ #theta*new_f with prior beta(1,5)
+  return (theta*new_f(theta)*(1-theta)^4)
+}
 ```
 ```{r}
 #This algorithm simulate from f(theta|y) using a uniform density as the proposal density, rejection sampling.
@@ -586,7 +590,7 @@ random.multinomial <- function(n){
     x.out[i] <- x #appending the values that get accepted (u<=alpha)
   }
   cat(rejections,"rejections out of",(n+rejections),"trials.(",(rejections)/(n+rejections)*100, "% )\n")
-  return (x.out)
+  return(list(theta = x.out, tries = rejections+n))
 }
 ```
 To estimate the posterior mean of $\theta$ we use Monte-Carlo integration with M=10000 samples from $f(\theta|y)$. 
@@ -606,7 +610,21 @@ expected_mean=integrate(theta_new_f,0,1)
 cat("Expected posterior mean:", expected_mean$value, "\n")
 ```
 
-To estimate the posterior mean under the new prior $g(\theta) \sim Beta(1,5)$ we use importance sampling with samples from $f(\theta|y)$. Since neither $f(\theta) \propto 1$ and $g(\theta) \propto (1-\theta)^4$ are normalize, we use self-normalizing importance sampling to calculate the new posterior mean.
+```{r}
+M=10000
+average_theta_tries <- random.multinomial(M)$tries /M
+cat("Our sampling algorithm need to generate on average", average_theta_tries, "random numbers, in order to obtain one sample. \n")
+```
+
+We would expect, on average, to generate $c$ samples before one i accepted, since the overall acceptance rate is $c^{-1}$. Since the propsal density is $\mathcal{U}(0, 1)$, we have $c\geq f(x)$. Hence, we can numerically calculate $c = \max_{\theta \in [0, 1]} f(\theta | \textbf{y})$.
+
+```{r}
+c=optimize(new_f,interval = c(0,1),maximum=TRUE)$objective
+c
+```
+
+
+To estimate the posterior mean under the new prior $g(\theta) \sim Beta(1,5)$ we use importance sampling with samples from $f(\theta|y) ~\text{with}~ f(\theta) \sim Beta(1,1)$. Since neither $f(\theta) \propto 1$ and $g(\theta) \propto (1-\theta)^4$ are normalize, we use self-normalizing importance sampling to calculate the new posterior mean.
 
 $$
 \tilde{\mu}=\frac{\sum_{i=1}^{n}h(\theta_i)w(\theta_i)}{\sum_{i=1}^{n}w(\theta_i)},
@@ -618,15 +636,18 @@ $$
 
 ```{r}
 importance_sampling <- function(n){ 
-  theta <- random.multinomial(n) #samples from f(theta|y) with the rejection sampling
+  theta <- random.multinomial(n)$theta #samples from f(theta|y) with the rejection sampling
   w=(1-theta)^4 #importance weight
   mu <- sum(theta*w)/sum(w) #self-normalizing 
   return(mu)
 }
 
 mu.estimate <- importance_sampling(10000)
+mu.estimate
+expected_mean=integrate(theta_new_f_g,0,1) 
+expected_mean
 
-sample.multinomial <- enframe(random.multinomial(100000))
+sample.multinomial <- enframe(random.multinomial(100000)$theta)
 
 ggplot() +
     geom_histogram(
