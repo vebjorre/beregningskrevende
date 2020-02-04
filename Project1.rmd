@@ -540,7 +540,7 @@ diag(var(dirichlet.sample))
 #Analytical variance
 alpha1*(1-alpha1)/(1+alphasum)
 ```
-The empirical mean and variance are very close to the analytical values.
+The empirical mean and variance are very close to the analytical values and thus the implementation seems good.
 
 # Problem D: Rejection sampling and importance sampling
 In this exercise we are interested in the posterior mean $E\big[\theta|y\big]$. For $\theta \in (0,1)$ the observed posterior density is $f(\theta|y) \propto (2+\theta)^{125}(1-\theta)^{38}\theta^{34}$.
@@ -556,18 +556,27 @@ f <- function(theta){ #The proportional function
 res = optimise(f, interval = c(0,1),maximum=TRUE) 
 maxima=res$objective
 
-theta_new_f <- function(theta){ #theta*new_f
-  return (theta*new_f(theta))
-}
-
-new_f <- function(theta){
+new_f <- function(theta){ #Normalised density function
   return (f(theta)/as.numeric(integrate(f,0,1)[1])) 
 }
 
-theta_new_f_g <- function(theta){ #theta*new_f with prior beta(1,5)
-  return (theta*new_f(theta)*(1-theta)^4)
+theta_new_f <- function(theta){ #theta*normalised function
+  return (theta*new_f(theta))
+}
+
+posterior <- function(theta){ #proportional function with prior beta(1,5)
+  return(f(theta)*(1-theta)^4)
+}
+
+posterior.normalised <- function(theta){ #normalised function with prior beta(1,5)
+  posterior(theta)/as.numeric(integrate(posterior,0,1)[1])
+}
+
+theta_new_f_g <- function(theta){ #theta*normalised function with prior beta(1,5)
+  return (theta*posterior.normalised(theta))
 }
 ```
+
 ```{r}
 #This algorithm simulate from f(theta|y) using a uniform density as the proposal density, rejection sampling.
 random.multinomial <- function(n){
@@ -596,7 +605,7 @@ random.multinomial <- function(n){
 To estimate the posterior mean of $\theta$ we use Monte-Carlo integration with M=10000 samples from $f(\theta|y)$. 
 
 ```{r}
-sample.multinomial <- random.multinomial(10000)
+sample.multinomial <- random.multinomial(1000)$theta
 cat("Estimated posterior mean:", mean(sample.multinomial), "\n")
 ```
 
@@ -605,10 +614,35 @@ by numerically solving the integral
 $$
 E\big[\theta|y\big] = \int_0^1 \theta \cdot f(\theta | \textbf{y})~\text{d}\theta.
 $$
+
 ```{r}
 expected_mean=integrate(theta_new_f,0,1) 
 cat("Expected posterior mean:", expected_mean$value, "\n")
+
+sample.multinomial <- enframe(random.multinomial(100000)$theta)
+
+ggplot() +
+    geom_histogram(
+      data = data.frame(sample.multinomial),
+      mapping = aes(x=value, y=..density..),
+      binwidth = 0.001,
+      boundary = 0,
+      na.rm = TRUE
+    ) +
+    geom_vline(
+      aes(xintercept=mean(sample.multinomial$value),
+          col='Empirical mean')
+    ) +
+    stat_function(
+      fun = new_f,
+      aes(col='Theoretical density')
+    ) +
+    labs(
+      caption = expression("Histogram of sample from the posterior distribution compared to its theoretical density.")
+    )
 ```
+
+The histogram indicates that the sampler works well since it has similar shape as the density function.
 
 ```{r}
 M=10000
@@ -646,27 +680,5 @@ mu.estimate <- importance_sampling(10000)
 mu.estimate
 expected_mean=integrate(theta_new_f_g,0,1) 
 expected_mean
-
-sample.multinomial <- enframe(random.multinomial(100000)$theta)
-
-ggplot() +
-    geom_histogram(
-      data = data.frame(sample.multinomial),
-      mapping = aes(x=value, y=..density..),
-      binwidth = 0.001,
-      boundary = 0,
-      na.rm = TRUE
-    ) +
-    geom_vline(
-      aes(xintercept=mean(sample.multinomial$value),
-          col='Empirical mean')
-    ) +
-    stat_function(
-      fun = new_f,
-      aes(col='Theoretical density')
-    ) +
-    labs(
-      caption = expression("Histogram of sample from the posterior distribution compared to its theoretical density.")
-    )
-    
 ```
+The estimated mean is the same as the expected mean, which somewhat validates the implementation. We observe that this mean is smaller than with the uniform prior. This can be explained by the shape of the priors. While the $Beta(1,1)$ is uniform on $[0,1]$, the $Beta(1,5)$-distribution is much larger for small $\theta$ and close to 0 for $\theta>0.75$. This necessarily leads to fewer samples for $\theta$ close to 1, which again skewes the mean downwards.
