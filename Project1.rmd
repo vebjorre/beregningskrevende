@@ -299,14 +299,6 @@ f^*(e^u)=\begin{cases} u(\alpha-1)-e^u, & 0<x \\ 0, & othetwise \end{cases}.
 $$
 
 ```{r, include=TRUE}
-a <- function(alpha){ 
-  return (sqrt((alpha-1)^(alpha-1)*exp(-alpha+1)))
-}
-
-b <- function(alpha){ #b+
-  return (sqrt((alpha+1)^(alpha+1)*exp(-alpha-1)))
-}
-
 logf <- function(u,alpha){ #log of f* with u=log(x)
   return (u*(alpha-1)-exp(u))
 }
@@ -322,8 +314,8 @@ sample <- function(ab){ #This function sample from the distribution of log(x), u
 random.gamma2 <- function(n,alpha){
   count=0 #count how many tries the algorithm needs to generate n realisations
   x=rep(0,n)
-  a=log(((alpha-1)/exp(1))^((alpha-1)/2))
-  b=log(((alpha+1)/exp(1))^((alpha+1)/2))
+  a=(alpha-1)/2*(log(alpha-1)-1)
+  b=(alpha+1)/2*(log(alpha+1)-1)
   for (i in 1:n){
     inside=FALSE
     while (inside==FALSE){
@@ -340,7 +332,7 @@ random.gamma2 <- function(n,alpha){
 }
 
 #Testing function 
-alpha=300 #FUNKER IKKE FOR ALPHA>300......
+alpha=2000
 ex.gamma2=random.gamma2(1000,alpha)
 cat("Empirical mean:",mean(ex.gamma2[-1]), "Analytical mean:",alpha, "\n")
 cat("Empirical variance:", var(ex.gamma2[-1]), "Analytical variance:",alpha,"\n")
@@ -352,7 +344,7 @@ The empirical mean and variance are close to the analytical values so the implem
 #Generate a plot with values of alpha on the x-axis and the number of tries used on the y-axis. 
 plot.count <- function(nsample, n){
   count=rep(0,n)
-  alp=seq(1,300,length.out=n)
+  alp=seq(1.01,2000,length.out=n)
   for (i in 1:n){
     alpha=alp[i]
     c=random.gamma2(nsample,alpha)[1]
@@ -360,7 +352,7 @@ plot.count <- function(nsample, n){
   }
   plot(alp,count)
 }
-plot.count(1000,30)
+plot.count(1000,100)
 ```
 
 From the plot we can see that the number of tries the algorithm needs to generate $n=1000$ realisations increases almost linearly with the value of $\alpha$. SJEKK DETTE ETTER AT VI FÅR PLOTTET FOR ALLE ALPHA
@@ -468,7 +460,7 @@ f_{X,V}(x_1,\dots,x_{K-1},v)
 
 And by integration the marginal distribution of $(x_1,\dots,x_{K-1})$ is
 $$
-f_X(x_1,\dots,x_{K-1})=  \frac{\int_0^\infty v^{(\sum_{k=1}^{K}\alpha_i)-1}e^{-v}dv}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
+f_X(x_1,\dots,x_{K-1})=  \frac{\int_0^\infty v^{(\sum_{k=1}^{K}\alpha_k)-1}e^{-v}dv}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
 $$
 $$= \frac{\Gamma(\sum_{k=1}^{K}\alpha_i)}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
 $$
@@ -515,28 +507,33 @@ alpha1*(1-alpha1)/(1+alphasum)
 The empirical mean and variance are very close to the analytical values.
 
 # Problem D: Rejection sampling and importance sampling
+In this exercise we are interested in the posterior mean $E\big[\theta|y\big]$. For $\theta \in (0,1)$ the observed posterior density is $f(\theta|y) \propto (2+\theta)^{125}(1-\theta)^{38}\theta^{34}$.
+
+First we implement a rejection sampling algorithm to simulate from $f(\theta|y)$ using the uniform distribution $\mathcal{U}(0, 1)$ as the proposal density. Hence, the acceptance probability is $\alpha=\frac{1}{c}f(x)$
 
 ```{r}
-f <- function(theta){
-  return ((2+theta)^125*(1-theta)^(18+20)*theta^34)
+f <- function(theta){ #The proportional function
+  return ((2+theta)^125*(1-theta)^(18+20)*theta^34) 
 }
 
+#Find the maxima of the proportional function 
 res = optimise(f, interval = c(0,1),maximum=TRUE) 
+maxima=res$objective
   
 logf <- function(theta){
-  return (log((2+theta)^125*(1-theta)^(18+20)*theta^34))
+  return (log(f(theta)))
 }
 
 cf <- function(theta){
-  return ((2+theta)^125*(1-theta)^(18+20)*theta^34) / f(15/394+sqrt(53809)/394)
+  return (f(theta) / maxima)
 }
 
-theta_new_f <- function(theta){
+theta_new_f <- function(theta){ #theta*new_f
   return (theta*new_f(theta))
 }
 
 new_f <- function(theta){
-  return (((2+theta)^125*(1-theta)^(18+20)*theta^34)/as.numeric(integrate(f,0,1)[1]))
+  return (f(theta)/as.numeric(integrate(f,0,1)[1])) 
 }
 ```
 ```{r}
@@ -546,44 +543,60 @@ random.multinomial <- function(n){
   rejections <- 0
   for (i in 1:n){
     finished <- FALSE
-    c <- res$objective #f(15/394+sqrt(53809)/394)
+    c <- maxima #res$objective  #f(15/394+sqrt(53809)/394)
     while(!finished){
       x <- runif(1) #sample from the proposal distribution, U(0,1)
       alpha <- f(x) / c #compute the acceptance probability alpha
       u <- runif(1) #generate a helping variable U from a uniform(0,1)
-      if (u <= alpha){
+      if (u <= alpha){ #Check if we accept it 
         finished <- TRUE
       }
       else{
-        rejections = rejections + 1
+        rejections = rejections + 1 #count the rejections
       }
     }
-    x.out[i] <- x
+    x.out[i] <- x #appending the values that get accepted (u<=alpha)
   }
-  cat(rejections,"rejections out of",(n+rejections),"trials.(",(rejections)/(n+rejections)*100, "% )")
+  cat(rejections,"rejections out of",(n+rejections),"trials.(",(rejections)/(n+rejections)*100, "% )\n")
   return (x.out)
 }
+```
+To estimate the posterior mean of $\theta$ we use Monte-Carlo integration with M=10000 samples from $f(\theta|y)$. 
 
+```{r}
 test <- random.multinomial(10000)
-mean(test)
-var(test)
+cat("Estimated posterior mean:", mean(test), "\n")
 hist(test, prob=TRUE)
 xlin <- seq(0,1,.01)
 lines(new_f(xlin))
 curve(new_f,0,1)
+```
 
+To check the value of the estimated posterior mean, we approximate it
+by numerically solving the integral 
+$$
+E\big[\theta|y\big] = \int_0^1 \theta \cdot f(\theta | \textbf{y})~\text{d}\theta.
+$$
+```{r}
+expected_mean=integrate(theta_new_f,0,1) 
+cat("Expected posterior mean:", expected_mean$value, "\n")
+```
 
-newc <- integrate(f, 0, 1)
-integrate(theta_new_f,0,1)
+To estimate the posterior mean under the new prior $g(\theta) \sim Beta(1,5)$ we use importance sampling with samples from $f(\theta|y)$. Since neither $f(\theta) \propto 1$ and $g(\theta) \propto (1-\theta)^4$ are normalize, we use self-normalizing importance sampling to calculate the new posterior mean.
 
+$$
+\tilde{\mu}=\frac{\sum_{i=1}^{n}h(\theta_i)w(\theta_i)}{\sum_{i=1}^{n}w(\theta_i)},
+$$
+where $h(\theta_i)=\theta_i$ is the samples from $f(\theta|y)$ and 
+$$
+w(\theta_i)=\frac{g(\theta_i)}{f(\theta_i)} \propto (1-\theta)^4.
+$$
 
-importance_sampling <- function(n){ #mulig vi ikke kan bruke self-normalizing? 
-  x <- random.multinomial(n)
-  mu <- sum(x*(1-x)^4/f(x))/sum((1-x)^4/f(x))
-  print(mu)
-  mu1 <- sum(x*(1-x)^4)/sum((1-x)^4) #med f(x)=1 - prior istedenfor posterior?
-  print(mu1)
-  print(mean(x))
+```{r}
+importance_sampling <- function(n){ 
+  theta <- random.multinomial(n) #samples from f(theta|y) with the rejection sampling
+  w=(1-theta)^4 #importance weight
+  mu <- sum(theta*w)/sum(w) #self-normalizing 
   return(mu)
 }
 
