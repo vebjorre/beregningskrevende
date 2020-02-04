@@ -336,13 +336,13 @@ sample <- function(ab){ #This function sample from the distribution of log(x), u
 random.gamma2 <- function(n,alpha){
   count=0 #count how many tries the algorithm needs to generate n realisations
   x=rep(0,n)
-  a=(alpha-1)/2*(log(alpha-1)-1)
-  b=(alpha+1)/2*(log(alpha+1)-1)
+  a=(alpha-1)/2*(log(alpha-1)-1) #log(a)
+  b=(alpha+1)/2*(log(alpha+1)-1) #log(b+)
   for (i in 1:n){
     inside=FALSE
     while (inside==FALSE){
       u1=sample(a) 
-      u2=sample(b)
+      u2=sample(b) 
       u=u2-u1
       test=0.5*logf(u,alpha)
       inside=test>=u1 
@@ -606,6 +606,7 @@ To estimate the posterior mean of $\theta$ we use Monte-Carlo integration with M
 ```{r}
 M=10000
 sample.multinomial <- random.multinomial(M)
+tries <- sample.multinomial$tries
 cat("Estimated posterior mean:", mean(sample.multinomial$theta), "\n")
 ```
 
@@ -646,7 +647,7 @@ The histogram indicates that the sampler works well since it has similar shape a
 
 To check how many random numbers our sampling algorithm need to generate on average in order to obtain one sample of $f(\theta|\textbf{y})$ we divide the number of trials on $M$.
 ```{r}
-average_theta_tries <- sample.multinomial$tries /M
+average_theta_tries <- tries /M
 cat("Average random numbers generated to obtain one sample:", average_theta_tries,"\n")
 ```
 
