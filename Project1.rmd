@@ -314,7 +314,7 @@ test.function(10000,random.gamma1,alpha,alpha,alpha)
 
 The printout shows that the empirical mean and variance are close to the analytical values so the implementation seems correct.
 
-Now we consider the gamma distribution with parameters $\alpha>1$ and $\beta=1$. To use ratio of uniforms method to simulate from this distrubution, we need to find $C_f\subset[0,a] \times [b_-,b_+]$. 
+Now we consider the gamma distribution with parameters $\alpha>1$ and $\beta=1$. To use ratio of uniforms method to simulate from this distrubution, we need to find the values of $a$, $b_-$ and $b_+$, such that $C_f\subset[0,a] \times [b_-,b_+]$. 
 First we find the value of $a=\sqrt{sup_xf^*(x)}$. 
 $$
 \frac{d}{dx}f^*(x)=(\alpha-1)x^{\alpha-2}e^{-x}-e^{-x}x^{\alpha-1}=e^{-x}x^{\alpha-2}(\alpha-1-x)=0 \Rightarrow x=\alpha-1 	\lor x=0
@@ -327,21 +327,22 @@ $$
 $$
 $x^2f^*(x)$ has its maximum when $x=\alpha+1$, hence $b_+=\sqrt{(\alpha+1)f^*(\alpha+1)}=\sqrt{(\alpha+1)^{\alpha+1}e^{-\alpha-1}}$.
 
-To avoid overflow, we implement the algorithm on log-scale, $u=log(x)$. Hence, we define $C_f=\{ (u_1,u_2):0\leq u_1 \leq 0.5{f^*(e^{u_2-u_1})}\}$ where
+To avoid overflow, we implement the algorithm on log-scale, $u_1=log(x_1)$ and $u_2=log(x_2)$. Hence, we define $C_f=\{ (u_1,u_2):0\leq u_1 \leq 0.5{f^*(e^{u_2-u_1})}\}$ where
 $$
 f^*(e^u)=\begin{cases} u(\alpha-1)-e^u, & 0<x \\ 0, & otherwise \end{cases}.
 $$
 
+We use the theorem for change of variables to find the new density, $f_U(u_1)=e^{u_1}/a$. Then, we integrate over the interval and get the cumulativ distribution $F(u_1)=e^{u_1}/a$. By setting $y_1=F(u_1)$ and solve for $u_1$, we find the inverse of the cumulative distribution, $F^{-1}(y_1)=\text{log}(ay_1)$. Now we can sample from $f_U(u_1)$ by generating $v\sim \mathcal{U}(0, 1)$ and returning $u_1=\text{log}(av)$ and sample from $f_U(u_2)$ by generating a $v\sim \mathcal{U}(0, 1)$ and returning $u_2=\text{log}(bv)$
+ 
 ```{r, include=TRUE}
 logf <- function(u,alpha){ #log of f* with u=log(x)
   return (u*(alpha-1)-exp(u))
 }
 
-#This function sample from the distribution of log(x), using
-#the inverse of the cumulative distribution. 
-sample <- function(ab){ 
-  u=log(runif(1,0,1))
-  return (ab+u)
+#This function sample uniformly from the [-inf,log(a)]X[-inf,log(b)] rectangles using the inverse of the cumulative distribution 
+sample <- function(log_ab){ #log_ab is either log(a) or log(b)
+  v=log(runif(1,0,1))
+  return (log_ab+v) 
 }
 ```
 
@@ -351,21 +352,20 @@ sample <- function(ab){
 random.gamma2 <- function(n,alpha){
   count=0 #count how many tries the algorithm needs to generate n realisations
   x=rep(0,n)
-  a=(alpha-1)/2*(log(alpha-1)-1) #log(a)
-  b=(alpha+1)/2*(log(alpha+1)-1) #log(b+)
+  log_a=(alpha-1)/2*(log(alpha-1)-1) 
+  log_b=(alpha+1)/2*(log(alpha+1)-1) #log(b+)
   for (i in 1:n){
     inside=FALSE
     while (inside==FALSE){
-      u1=sample(a) 
-      u2=sample(b) 
-      u=u2-u1
-      test=0.5*logf(u,alpha)
-      inside=test>=u1 
+      u1=sample(log_a) #sample uniformly from [-inf,log(a)]
+      u2=sample(log_b) #sample uniformly from [-inf,log(b)] 
+      u=u2-u1 
+      inside=0.5*logf(u,alpha)>=u1 #checking if the sample is inside C_f
       count=count+1
     }
-    x[i] = u
+    x[i] = exp(u) #re-transform the final result
   }
-  vec=c(count,exp(x)) #count + n realisations
+  vec=c(count,x) #count + vector with n samples
 }
 
 #Testing gamma sampler with alpha>1 and 1000 samples
@@ -385,7 +385,7 @@ plot.count <- function(nsample, n){
   alpha=seq(1.01,2000,length.out=n)
   for (i in 1:n){
     a=alpha[i]
-    c=random.gamma2(nsample,a)[1]
+    c=random.gamma2(nsample,a)[1] #number of tries used to generate n samples for alpha[i]
     count[i]=c
   }
   return(cbind(alpha,count))
@@ -705,6 +705,6 @@ importance_sampling <- function(n){
 mu.estimate <- importance_sampling(10000)
 mu.estimate
 expected_mean=integrate(theta_new_f_g,0,1) 
-expected_mean
+expected_mean$value
 ```
 The estimated mean is the same as the expected mean, which somewhat validates the implementation. We observe that this mean is smaller than with the uniform prior. This can be explained by the shape of the priors. While the $Beta(1,1)$ is uniform on $[0,1]$, the $Beta(1,5)$-distribution is much larger for small $\theta$ and close to 0 for $\theta>0.75$. This necessarily leads to fewer samples for $\theta$ close to 1, which again skewes the mean downwards.
