@@ -29,7 +29,9 @@ random.exp <- function(n,lam){
 ```
 We know that $\text{E}(X)=\frac{1}{\lambda}$ and $\text{Var}(X)=\frac{1}{\lambda^2}$. The empirical mean is given by the average of the sample and the empirical variance is $\widehat{\text{Var}(X)}=\frac{\sum_{i=1}^n x_i}{n-1}$.
 ```{r}
-#Testing function
+#Function for comparing empirical mean and variance with theoretical values
+#n=number of samples, func=sampling function, arg=arguments to func
+#amean and avar=analytical mean and variance
 test.function <- function(n,func,arg,amean,avar){
   exs.sample=func(n,arg)
   cat("Empirical mean:", mean(exs.sample), "Analytical mean:",amean, "\n")
@@ -109,7 +111,8 @@ c.g <- function(a){
   return (a*exp(1)/(a+exp(1)))
 }
 
-#Normalised density function for g (for plot)
+#Normalised density function for g
+#Used only to compare with histogram
 g <- function(x, a) {
   c <- c.g(a)
   out <- rep(0, length(x))
@@ -148,7 +151,7 @@ The analytical mean and variance of $X\sim g(x)$ are computed in the usual way
 
 ```{r, include=TRUE}
 
-#Testing funtion
+#Testing sampling function with n=10000 samples
 a <- .6 #parameter
 c <- c.g(a) #normalising constant
 g.mean <- c/(a+1)+2*c*exp(-1) #analytical mean
@@ -156,7 +159,7 @@ g.var <- c*(1/(a+2)+ 5*exp(-1)) - g.mean^2 #analytical variance
 test.function(10000,random.g,a,g.mean,g.var)
 ```
 
-The mean and variance of the sample is close to the theoretical values.
+The mean and variance of the sample are close to the theoretical values.
 
 ```{r}
 #Making histogram of sample from g
@@ -186,9 +189,9 @@ ggplot() +
     )
 ```
 
-The histogram and density function coincide and that further indicates that the implementation is correct.
+The histogram and density function coincide and that further indicates that the implementation is correct. Generating even more samples would smoothen the histogram even more.
 
-The Box-Müller algorithm samples from the bivariate standard normal distribution. We first generate $x_1 \sim \mathcal{U}(0,2\pi)$ and $x_2 \sim \text{exp}(\frac{1}{2})$ and then return $y_1=\sqrt{x_2}\text{cos}(x_1)$ and $y_2=\sqrt{x_2}\text{sin}(x_1)$. We want to generate a vector of $n$ independent samples from the standard normal distribution. Thus we only keep $y_1$ from each bivariate sample.
+The Box-Müller algorithm samples from the bivariate standard normal distribution. We first generate $x_1 \sim \mathcal{U}(0,2\pi)$ and $x_2 \sim \text{exp}(\frac{1}{2})$ and then return $y_1=\sqrt{x_2}\text{cos}(x_1)$ and $y_2=\sqrt{x_2}\text{sin}(x_1)$. We want to generate a vector of $n$ independent samples from the standard normal distribution. Thus, for simplicity, we only keep $y_1$ from each bivariate sample.
 
 ```{r, include=TRUE}
 #This function returns a vector of n independent samples from the standard normal
@@ -199,7 +202,7 @@ random.norm <- function(n){
   return(sqrt(x2)*cos(x1))
 }
 
-#Testing function
+#Testing sampling function for standard normal distribution
 sample.normal=enframe(random.norm(100000))
 cat("Empirical mean:", mean(sample.normal$value), "Analytical mean:",0.0, "\n")
 cat("Empirical variance:", var(sample.normal$value), "Analytical variance:",1.0,"\n")
@@ -227,7 +230,7 @@ ggplot() +
 
 The empirical mean and variance are close to the analytical values so the implementation seems correct. The histogram of the samples is also just like expected.
 
-Now we want to sample from a d-variate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\mathbf{\Sigma}$. This is done by generating a vector $\boldsymbol{x}$ of $d$ standard normal samples and doing the transform $\boldsymbol{y}=\mathbf{A}\boldsymbol{x}+\boldsymbol{\mu}$ where $\mathbf{AA^T=\Sigma}$. We find $\mathbf{A}$ by the cholesky decomposition of $\mathbf{\Sigma}$.
+Now we want to sample from a d-variate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\mathbf{\Sigma}$. This is done by generating a vector $\boldsymbol{x}$ of $d$ standard normal samples and doing the transform $\boldsymbol{y}=\mathbf{A}\boldsymbol{x}+\boldsymbol{\mu}$ where $\mathbf{AA^T=\Sigma}$. We find $\mathbf{A}$ by the Cholesky decomposition of $\mathbf{\Sigma}$.
 
 ```{r}
 #This function returns a sample from the d-variate normal distribution with mean mu
@@ -238,11 +241,10 @@ random.multinorm <- function(d,mu,S){
   return(mu + A%*%x)
 }
 
-#Testing function
+#Testing d-variate normal distribution sampler with 10000 samples
 d = 3
 N = 10000
 sigma <- cbind(c(3,1,0), c(1,3,1), c(0,1,3)) #if d=3
-# sigma <- cbind(c(2,1),c(1,2))                  #if d=2
 mu <- seq(1,d)
 multinormal.sample <- matrix(NA,N,d)
 for (i in 1:N){
@@ -258,7 +260,7 @@ sigma
 var(multinormal.sample)
 ```
 
-We see that the empirical moments are very close to the real values.
+We see that the empirical moments are very close to the real values, as expected.
 
 # Problem B: The gamma distribution
 First, we consider the gamma distribution with parameters $\alpha \in (0,1)$ and $\beta=1$. To generate samples from $f(x)$, we use rejection sampling with $g(x)$ as proposal density. We need to find a $k>1$ such that $k\geq\frac{f(x)}{g(x)}$.
@@ -305,7 +307,7 @@ random.gamma1 <- function(n,a){
   return (x)
 }
 
-#Testing function
+#Testing function for gamma sampling with 0<alpha<1 and 10000 samples
 alpha=0.5
 test.function(10000,random.gamma1,alpha,alpha,alpha)
 ```
@@ -366,7 +368,7 @@ random.gamma2 <- function(n,alpha){
   vec=c(count,exp(x)) #count + n realisations
 }
 
-#Testing function 
+#Testing gamma sampler with alpha>1 and 1000 samples
 alpha=2000
 ex.gamma2=random.gamma2(1000,alpha)
 cat("Empirical mean:",mean(ex.gamma2[-1]), "Analytical mean:",alpha, "\n")
@@ -406,7 +408,8 @@ From the plot we can see that the number of tries the algorithm needs to generat
 
 By using the above functions and $X \sim Ga(\alpha,1) \Leftrightarrow X/\beta \sim Ga(\alpha, \beta)$, we write a function that generates a vector of n independent samples from the gamma distribution with parameters $\alpha$ and $\beta$. 
 ```{r}
-##This function returns a vector of n independent samples from the gamma distribution with parameters alpha and beta. 
+#This function returns a vector of n independent samples from the gamma distribution
+#with parameters alpha and beta. 
 random.gamma <- function(n, alpha, beta){
   if (alpha==1){
     x=random.exp(n,alpha) #sample from exponential distribution
@@ -420,7 +423,7 @@ random.gamma <- function(n, alpha, beta){
   return (x/beta) #Transform from x-Ga(alpha,1) to x/beta-Ga(alpha,beta)
 }
 
-#Testing function 
+#Generic function for testing complete gamma sampling function
 test.gamma <- function(n,alpha, beta){
   ex.gamma=random.gamma(n,alpha,beta)
   amean=alpha/beta #analytical mean
@@ -429,6 +432,7 @@ test.gamma <- function(n,alpha, beta){
   cat("Empirical variance:", var(ex.gamma), "Analytical variance:",avar,"\n")
 }
 
+#Genereric function for plotting histogram and density of gamma distribution
 plot.gamma <- function(n,alphav,betav){
   sample.gamma <- enframe(random.gamma(n,alpha=alphav,beta=betav))
   ggplot() +
@@ -455,6 +459,7 @@ plot.gamma <- function(n,alphav,betav){
                        ~ beta *"="* .(betav))
     )
 }
+#Testing for each of the three cases
 test.gamma(100000,0.5,0.7)
 test.gamma(100000,1,3)
 test.gamma(100000,4,10)
@@ -532,7 +537,8 @@ random.dirichlet <- function(alpha){
   return (z/v)
 }
 
-N_dir <- 1000
+#Generating Dirichlet samples with K=5
+N_dir <- 10000
 alpha <- c(.1, .5, .1, .3, .8)
 K <- length(alpha)
 dirichlet.sample <- matrix(1,N_dir,K)
