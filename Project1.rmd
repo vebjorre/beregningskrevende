@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, include=FALSE}
+library(tidyverse)
+```
+
 # Problem A: Stochastic simulation by the probability integral transform and bivariate techniques
 
 The inverse of the exponential cumulative density function with rate parameter $\lambda$ is given by 
@@ -29,15 +33,36 @@ test.function <- function(n,func,arg,amean,avar){
   exs.sample=func(n,arg)
   cat("Empirical mean:", mean(exs.sample), "Analytical mean:",amean, "\n")
   cat("Empirical variance:", var(exs.sample), "Analytical variance:",avar,"\n")
-  hist(exs.sample)
 }
 
 lam <- 3
+sample.exp <- enframe(random.exp(100000,lam))
+
+ggplot() +
+  geom_histogram(
+    data = data.frame(sample.exp),
+    mapping = aes(x=value, y=..density..),
+    binwidth = 0.01
+  ) +
+  geom_vline(
+    aes(xintercept=mean(sample.exp$value),
+        col='Empirical mean')
+  ) +
+  stat_function(
+    fun = dexp,
+    args = list(rate=lam),
+    aes(col='Theoretical density')
+  ) +
+  labs(
+    caption = 'Histogram'
+  )
+
+
 test.function(10000,random.exp,lam,1/lam,1/lam^2)
 
 ```
 
-The printout shows that the empirical mean and variance are close to the analitical values so the implementation seems correct.
+The printout shows that the empirical mean and variance are close to the analytical values so the implementation seems correct.
 
 We now consider the density function 
 $$
@@ -76,6 +101,16 @@ c.g <- function(a){
   return (a*exp(1)/(a+exp(1)))
 }
 
+g <- function(x, a) {
+  c <- c.g(a)
+  out <- rep(0, length(x))
+  left <- 0 < x & x < 1
+  right <- 1 <= x
+  out[left] <- c * (x[left] ^ (a - 1))
+  out[right] <- c * exp(-x[right])
+return(out)
+}
+
 #This function returns a vector of n independent samples from the g distribution with parameter a (=alpha), generated from the inverse cumulative distribution. 
 random.g <- function(n,a){
   c <- c.g(a) #Normalising constant
@@ -107,7 +142,27 @@ a <- .6
 c <- c.g(a)
 g.mean <- c/(a+1)+2*c*exp(-1) #analytical mean
 g.var <- c*(1/(a+2)+ 5*exp(-1)) - g.mean^2 #analytical variance
-test.function(10000,random.g,a,g.mean,g.var)
+# test.function(10000,random.g,a,g.mean,g.var)
+sample.g <- enframe(random.g(100000,a))
+
+ggplot() +
+  geom_histogram(
+    data = data.frame(sample.g),
+    mapping = aes(x=value, y=..density..),
+    binwidth = 0.01,
+    na.rm = FALSE
+  ) +
+  geom_vline(
+    aes(xintercept=mean(sample.g$value),
+        col='Empirical mean')
+  ) +
+  stat_function(
+    fun = g,
+    args = list(a=a),
+    aes(col='Theoretical density')
+  ) +
+  ylim(0,2) +
+  xlim(0,5)
 ```
 
 We can see that analytical and empirical moments coincide.
@@ -123,10 +178,25 @@ random.norm <- function(n){
 }
 
 #Testing function
-ex.normal=random.norm(10000)
-cat("Empirical mean:", mean(ex.normal), "Analytical mean:",0.0, "\n")
-cat("Empirical variance:", var(ex.normal), "Analytical variance:",1.0,"\n")
-hist(ex.normal)
+sample.normal=enframe(random.norm(100000))
+cat("Empirical mean:", mean(sample.normal), "Analytical mean:",0.0, "\n")
+cat("Empirical variance:", var(sample.normal), "Analytical variance:",1.0,"\n")
+
+ggplot() +
+  geom_histogram(
+    data = data.frame(sample.normal),
+    mapping = aes(x=value, y=..density..),
+    binwidth = 0.01
+  ) +
+  geom_vline(
+    aes(xintercept=mean(sample.normal$value),
+        col='Empirical mean')
+  ) +
+  stat_function(
+    fun = dnorm,
+    aes(col='Theoretical density')
+  )
+
 ```
 
 The empirical mean and variance are close to the analytical values so the implementation seems correct.
@@ -204,6 +274,7 @@ random.gamma1 <- function(n,a){
 
 #Testing function
 alpha=0.5
+sample.gamma1 <- random.gamma1(10000,alpha)
 test.function(10000,random.gamma1,alpha,alpha,alpha)
 ```
 
@@ -273,10 +344,9 @@ alpha=300 #FUNKER IKKE FOR ALPHA>300......
 ex.gamma2=random.gamma2(1000,alpha)
 cat("Empirical mean:",mean(ex.gamma2[-1]), "Analytical mean:",alpha, "\n")
 cat("Empirical variance:", var(ex.gamma2[-1]), "Analytical variance:",alpha,"\n")
-hist(ex.gamma2[-1])
 ```
 
-The empirical mean and variance are close to the analitical values so the implementation seems correct.
+The empirical mean and variance are close to the analytical values so the implementation seems correct.
 
 ```{r}
 #Generate a plot with values of alpha on the x-axis and the number of tries used on the y-axis. 
@@ -318,12 +388,36 @@ test.gamma <- function(n,alpha, beta){
   avar=alpha/beta^2 #analytical variance
   cat("Empirical mean:", mean(ex.gamma), "Analytical mean:",amean, "\n")
   cat("Empirical variance:", var(ex.gamma), "Analytical variance:",avar,"\n")
-  hist(ex.gamma)
 }
 
-test.gamma(10000,alpha=0.5,beta=0.7)
-test.gamma(10000,alpha=1,beta=3) 
-test.gamma(10000,alpha=4,beta=10)
+plot.gamma <- function(n,alpha,beta){
+  sample.gamma <- enframe(random.gamma(n,alpha=alpha,beta=beta))
+  ggplot() +
+    geom_histogram(
+      data = data.frame(sample.gamma),
+      mapping = aes(x=value, y=..density..),
+      binwidth = 0.01,
+      boundary = 0,
+      na.rm = TRUE
+    ) +
+    geom_vline(
+      aes(xintercept=mean(sample.gamma$value),
+          col='Empirical mean')
+    ) +
+    stat_function(
+      fun = partial(dgamma, shape=alpha, rate=beta),
+      aes(col='Theoretical density')
+    ) +
+    ylim(0,3) +
+    xlim(0,5)
+}
+test.gamma(100000,alpha=1,beta=3)
+test.gamma(100000,alpha=1,beta=3)
+test.gamma(100000,alpha=4,beta=10)
+plot.gamma(100000,0.5,0.7)
+plot.gamma(100000,1,3)
+plot.gamma(100000,4,10)
+
 ```
 
 # Problem C: The Dirichlet distribution: simulation using known relations
@@ -378,7 +472,7 @@ f_X(x_1,\dots,x_{K-1})=  \frac{\int_0^\infty v^{(\sum_{k=1}^{K}\alpha_i)-1}e^{-v
 $$
 $$= \frac{\Gamma(\sum_{k=1}^{K}\alpha_i)}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
 $$
-which is the Dirichlet distribution. 
+which means $(x_1,\dots,x_K)$ has a Dirichlet distribution.
 
 ```{r}
 ##This function generates one realisation from Dirichlet distribution with parameter vector alpha.
@@ -493,6 +587,20 @@ importance_sampling <- function(n){ #mulig vi ikke kan bruke self-normalizing?
   return(mu)
 }
 
-test2 <- importance_sampling(10000)
-test2
+mu.estimate <- importance_sampling(10000)
+
+sample.multinomial <- enframe(random.multinomial(100000))
+
+ggplot() +
+    geom_histogram(
+      data = data.frame(sample.multinomial),
+      mapping = aes(x=value, y=..density..),
+      binwidth = 0.001,
+      boundary = 0,
+      na.rm = TRUE
+    ) +
+    geom_vline(
+      aes(xintercept=mean(sample.multinomial$value),
+          col='Empirical mean')
+    )
 ```
