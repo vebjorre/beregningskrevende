@@ -413,28 +413,33 @@ alpha1*(1-alpha1)/(1+alphasum)
 The empirical mean and variance are very close to the analytical values.
 
 # Problem D: Rejection sampling and importance sampling
+In this exercise we are interested in the posterior mean $E\big[\theta|y\big]$. For $\theta \in (0,1)$ the observed posterior density is $f(\theta|y) \propto (2+\theta)^{125}(1-\theta)^{38}\theta^{34}$.
+
+First we implement a rejection sampling algorithm to simulate from $f(\theta|y)$ using the uniform distribution $\mathcal{U}(0, 1)$ as the proposal density. Hence, the acceptance probability is $\alpha=\frac{1}{c}f(x)$
 
 ```{r}
-f <- function(theta){
-  return ((2+theta)^125*(1-theta)^(18+20)*theta^34)
+f <- function(theta){ #The proportional function
+  return ((2+theta)^125*(1-theta)^(18+20)*theta^34) 
 }
 
+#Find the maxima of the proportional function 
 res = optimise(f, interval = c(0,1),maximum=TRUE) 
+maxima=res$objective
   
 logf <- function(theta){
-  return (log((2+theta)^125*(1-theta)^(18+20)*theta^34))
+  return (log(f(theta)))
 }
 
 cf <- function(theta){
-  return ((2+theta)^125*(1-theta)^(18+20)*theta^34) / f(15/394+sqrt(53809)/394)
+  return (f(theta) / maxima)
 }
 
-theta_new_f <- function(theta){
+theta_new_f <- function(theta){ #theta*new_f
   return (theta*new_f(theta))
 }
 
 new_f <- function(theta){
-  return (((2+theta)^125*(1-theta)^(18+20)*theta^34)/as.numeric(integrate(f,0,1)[1]))
+  return (f(theta)/as.numeric(integrate(f,0,1)[1])) 
 }
 ```
 ```{r}
@@ -444,40 +449,60 @@ random.multinomial <- function(n){
   rejections <- 0
   for (i in 1:n){
     finished <- FALSE
-    c <- res$objective #f(15/394+sqrt(53809)/394)
+    c <- maxima #res$objective  #f(15/394+sqrt(53809)/394)
     while(!finished){
       x <- runif(1) #sample from the proposal distribution, U(0,1)
       alpha <- f(x) / c #compute the acceptance probability alpha
       u <- runif(1) #generate a helping variable U from a uniform(0,1)
-      if (u <= alpha){
+      if (u <= alpha){ #Check if we accept it 
         finished <- TRUE
       }
       else{
-        rejections = rejections + 1
+        rejections = rejections + 1 #count the rejections
       }
     }
-    x.out[i] <- x
+    x.out[i] <- x #appending the values that get accepted (u<=alpha)
   }
-  cat(rejections,"rejections out of",(n+rejections),"trials.(",(rejections)/(n+rejections)*100, "% )")
+  cat(rejections,"rejections out of",(n+rejections),"trials.(",(rejections)/(n+rejections)*100, "% )\n")
   return (x.out)
 }
+```
+To estimate the posterior mean of $\theta$ we use Monte-Carlo integration with M=10000 samples from $f(\theta|y)$. 
 
+```{r}
 test <- random.multinomial(10000)
-mean(test)
-var(test)
+cat("Estimated posterior mean:", mean(test), "\n")
 hist(test, prob=TRUE)
 xlin <- seq(0,1,.01)
 lines(new_f(xlin))
 curve(new_f,0,1)
+```
 
+To check the value of the estimated posterior mean, we approximate it
+by numerically solving the integral 
+$$
+E\big[\theta|y\big] = \int_0^1 \theta \cdot f(\theta | \textbf{y})~\text{d}\theta.
+$$
+```{r}
+expected_mean=integrate(theta_new_f,0,1) 
+cat("Expected posterior mean:", expected_mean$value, "\n")
+```
 
-newc <- integrate(f, 0, 1)
-integrate(theta_new_f,0,1)
+To estimate the posterior mean under the new prior $g(\theta) \sim Beta(1,5)$ we use importance sampling with samples from $f(\theta|y)$. Since neither $f(\theta) \propto 1$ and $g(\theta) \propto (1-\theta)^4$ are normalize, we use self-normalizing importance sampling to calculate the new posterior mean.
 
+$$
+\tilde{\mu}=\frac{\sum_{i=1}^{n}h(\theta_i)w(\theta_i)}{\sum_{i=1}^{n}w(\theta_i)},
+$$
+where $h(\theta_i)=\theta_i$ is the samples from $f(\theta|y)$ and 
+$$
+w(\theta_i)=\frac{g(\theta_i)}{f(\theta_i)} \propto (1-\theta)^4.
+$$
 
+```{r}
 importance_sampling <- function(n){ 
-  x <- random.multinomial(n)
-  mu <- sum(x*(1-x)^4)/sum((1-x)^4) 
+  theta <- random.multinomial(n) #samples from f(theta|y) with the rejection sampling
+  w=(1-theta)^4 #importance weight
+  mu <- sum(theta*w)/sum(w) #self-normalizing 
   return(mu)
 }
 
