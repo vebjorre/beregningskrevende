@@ -581,7 +581,7 @@ theta_new_f_g <- function(theta){ #theta*normalised function with prior beta(1,5
 #This algorithm simulate from f(theta|y) using a uniform density as the proposal density, rejection sampling.
 random.multinomial <- function(n){
   x.out <- rep(NA,n)
-  rejections <- 0
+  tries <- 0
   for (i in 1:n){
     finished <- FALSE
     c <- maxima #res$objective
@@ -592,21 +592,19 @@ random.multinomial <- function(n){
       if (u <= alpha){ #Check if we accept it 
         finished <- TRUE
       }
-      else{
-        rejections = rejections + 1 #count the rejections
-      }
+      tries=tries+1 #count how many random numbers the algorithm generates
     }
     x.out[i] <- x #appending the values that get accepted (u<=alpha)
   }
-  cat(rejections,"rejections out of",(n+rejections),"trials.(",(rejections)/(n+rejections)*100, "% )\n")
-  return(list(theta = x.out, tries = rejections+n))
+  return(list(theta = x.out, tries = tries))
 }
 ```
 To estimate the posterior mean of $\theta$ we use Monte-Carlo integration with M=10000 samples from $f(\theta|y)$. 
 
 ```{r}
-sample.multinomial <- random.multinomial(1000)$theta
-cat("Estimated posterior mean:", mean(sample.multinomial), "\n")
+M=10000
+sample.multinomial <- random.multinomial(M)
+cat("Estimated posterior mean:", mean(sample.multinomial$theta), "\n")
 ```
 
 To check the value of the estimated posterior mean, we approximate it
@@ -644,19 +642,19 @@ ggplot() +
 
 The histogram indicates that the sampler works well since it has similar shape as the density function.
 
+To check how many random numbers our sampling algorithm need to generate on average in order to obtain one sample of $f(\theta|\textbf{y})$ we divide the number of trials on $M$.
 ```{r}
-M=10000
-average_theta_tries <- random.multinomial(M)$tries /M
-cat("Our sampling algorithm need to generate on average", average_theta_tries, "random numbers, in order to obtain one sample. \n")
+average_theta_tries <- sample.multinomial$tries /M
+cat("Average random numbers generated to obtain one sample:", average_theta_tries,"\n")
 ```
 
-We would expect, on average, to generate $c$ samples before one i accepted, since the overall acceptance rate is $c^{-1}$. Since the propsal density is $\mathcal{U}(0, 1)$, we have $c\geq f(x)$. Hence, we can numerically calculate $c = \max_{\theta \in [0, 1]} f(\theta | \textbf{y})$.
+We would expect, on average, to generate $c$ samples before one i accepted, since the overall acceptance rate is $c^{-1}$. Since the proposal density is $\mathcal{U}(0, 1)$, we have $c\geq f(x)$. Hence, we can numerically calculate $c = \max_{\theta \in [0, 1]} f(\theta | \textbf{y})$.
 
 ```{r}
 c=optimize(new_f,interval = c(0,1),maximum=TRUE)$objective
-c
+cat("Expected random numbers generated to obtain one sample:", c, "\n")
 ```
-
+The average of generated random numbers are close to the theoretical result, so the implementation of the algorithm seems correct.
 
 To estimate the posterior mean under the new prior $g(\theta) \sim Beta(1,5)$ we use importance sampling with samples from $f(\theta|y) ~\text{with}~ f(\theta) \sim Beta(1,1)$. Since neither $f(\theta) \propto 1$ and $g(\theta) \propto (1-\theta)^4$ are normalize, we use self-normalizing importance sampling to calculate the new posterior mean.
 
