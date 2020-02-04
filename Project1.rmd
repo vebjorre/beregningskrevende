@@ -194,12 +194,12 @@ random.norm <- function(n){
 
 #Testing function
 sample.normal=enframe(random.norm(100000))
-cat("Empirical mean:", mean(sample.normal), "Analytical mean:",0.0, "\n")
-cat("Empirical variance:", var(sample.normal), "Analytical variance:",1.0,"\n")
+cat("Empirical mean:", mean(sample.normal$value), "Analytical mean:",0.0, "\n")
+cat("Empirical variance:", var(sample.normal$value), "Analytical variance:",1.0,"\n")
 
 ggplot() +
   geom_histogram(
-    data = data.frame(sample.normal),
+    data = sample.normal,
     mapping = aes(x=value, y=..density..),
     binwidth = 0.01
   ) +
@@ -317,7 +317,7 @@ $x^2f^*(x)$ has its maximum when $x=\alpha+1$, hence $b_+=\sqrt{(\alpha+1)f^*(\a
 
 To avoid overflow, we implement the algorithm on log-scale, $u=log(x)$. Hence, we define $C_f=\{ (u_1,u_2):0\leq u_1 \leq 0.5{f^*(e^{u_2-u_1})}\}$ where
 $$
-f^*(e^u)=\begin{cases} u(\alpha-1)-e^u, & 0<x \\ 0, & othetwise \end{cases}.
+f^*(e^u)=\begin{cases} u(\alpha-1)-e^u, & 0<x \\ 0, & otherwise \end{cases}.
 $$
 
 ```{r, include=TRUE}
@@ -447,6 +447,8 @@ plot.gamma(100000,1,3)
 plot.gamma(100000,4,10)
 
 ```
+
+We made three plots to test the different cases of the gamma-distribution, one for each of $\alpha<1$, $\alpha=1$ and $\alpha>1$. All three histograms fit nicely to the theoretical gamma-distribution. 
 
 # Problem C: The Dirichlet distribution: simulation using known relations
 

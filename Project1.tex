@@ -1,0 +1,1137 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Computer Intensive Statistical Methods-Exercise 1},
+            pdfauthor={Vebjørn Rekkebo, Camilla Karlsen},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Computer Intensive Statistical Methods-Exercise 1}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Vebjørn Rekkebo, Camilla Karlsen}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{04.02.2020}
+
+
+\begin{document}
+\maketitle
+
+\hypertarget{problem-a-stochastic-simulation-by-the-probability-integral-transform-and-bivariate-techniques}{%
+\section{Problem A: Stochastic simulation by the probability integral
+transform and bivariate
+techniques}\label{problem-a-stochastic-simulation-by-the-probability-integral-transform-and-bivariate-techniques}}
+
+The inverse of the exponential cumulative density function with rate
+parameter \(\lambda\) is given by \[
+F^{-1}(u) = -\frac{1}{\lambda}\text{log}(u).
+\] Hence we can sample from the exponential distribution by generating
+\(u\sim \mathcal{U}[0,1]\) and returning
+\(-\frac{1}{\lambda}\text{log}(u)\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#This function returns a vector of n independent samples from the exponential distribution with rate parameter lam, generated from the inverse cumulative distribution. }
+\NormalTok{random.exp <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n,lam)\{}
+  \KeywordTok{return}\NormalTok{(}\OperatorTok{-}\DecValTok{1}\OperatorTok{/}\NormalTok{lam }\OperatorTok{*}\StringTok{ }\KeywordTok{log}\NormalTok{(}\KeywordTok{runif}\NormalTok{(n)))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+We know that \(\text{E}(X)=\frac{1}{\lambda}\) and
+\(\text{Var}(X)=\frac{1}{\lambda^2}\). The empirical mean is given by
+the average of the sample and the empirical variance is
+\(\widehat{\text{Var}(X)}=\frac{\sum_{i=1}^n x_i}{n-1}\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Testing function}
+\NormalTok{test.function <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n,func,arg,amean,avar)\{}
+\NormalTok{  exs.sample=}\KeywordTok{func}\NormalTok{(n,arg)}
+  \KeywordTok{cat}\NormalTok{(}\StringTok{"Empirical mean:"}\NormalTok{, }\KeywordTok{mean}\NormalTok{(exs.sample), }\StringTok{"Analytical mean:"}\NormalTok{,amean, }\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+  \KeywordTok{cat}\NormalTok{(}\StringTok{"Empirical variance:"}\NormalTok{, }\KeywordTok{var}\NormalTok{(exs.sample), }\StringTok{"Analytical variance:"}\NormalTok{,avar,}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\}}
+
+\CommentTok{#Make histogram of sample}
+\NormalTok{lam <-}\StringTok{ }\DecValTok{3}
+\NormalTok{sample.exp <-}\StringTok{ }\KeywordTok{enframe}\NormalTok{(}\KeywordTok{random.exp}\NormalTok{(}\DecValTok{100000}\NormalTok{,lam))}
+
+\KeywordTok{ggplot}\NormalTok{() }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}
+    \DataTypeTok{data =} \KeywordTok{data.frame}\NormalTok{(sample.exp),}
+    \DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{value, }\DataTypeTok{y=}\NormalTok{..density..),}
+    \DataTypeTok{binwidth =} \FloatTok{0.01}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}
+    \KeywordTok{aes}\NormalTok{(}\DataTypeTok{xintercept=}\KeywordTok{mean}\NormalTok{(sample.exp}\OperatorTok{$}\NormalTok{value),}
+        \DataTypeTok{col=}\StringTok{'Empirical mean'}\NormalTok{)}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{stat_function}\NormalTok{(}
+    \DataTypeTok{fun =}\NormalTok{ dexp,}
+    \DataTypeTok{args =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{rate=}\NormalTok{lam),}
+    \KeywordTok{aes}\NormalTok{(}\DataTypeTok{col=}\StringTok{'Theoretical density'}\NormalTok{)}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}
+    \DataTypeTok{caption =} \KeywordTok{expression}\NormalTok{(}\StringTok{"Histogram of sample from exponential distribution with "}\OperatorTok{*}\NormalTok{lambda}\OperatorTok{*}\StringTok{"=3 compared to theoretical density."}\NormalTok{)}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Project1_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+The histogram fits very well with the theoretical density function and
+the mean is close to \(\frac{1}{\lambda}=\frac{1}{3}\) as it should be.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{test.function}\NormalTok{(}\DecValTok{10000}\NormalTok{,random.exp,lam,}\DecValTok{1}\OperatorTok{/}\NormalTok{lam,}\DecValTok{1}\OperatorTok{/}\NormalTok{lam}\OperatorTok{^}\DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical mean: 0.3320791 Analytical mean: 0.3333333 
+## Empirical variance: 0.1085954 Analytical variance: 0.1111111
+\end{verbatim}
+
+The printout shows that the empirical mean and variance are close to the
+analytical values so the implementation seems correct.
+
+We now consider the density function \[
+g(x) = \begin{cases} cx^{\alpha-1}, &0<x<1,\\ ce^{-x}, &1\leq x, \\ 0, &\text{otherwise,} \end{cases}
+\] where c is a normalising constant and \(\alpha \in (0,1)\).
+Integration over the different intervals yields the cumulative
+distribution \[
+G(x) = \begin{cases} \frac{c}{\alpha}x^\alpha, &0<x<1,\\ c(\alpha^{-1}+e^{-1}-e^{-x}) &1\leq x, \\ 0, &\text{otherwise}. \end{cases}
+\] We can now set \(u=G(x)\) and solve for \(x\) \[
+\begin{cases} 
+u=\frac{c}{\alpha}x^\alpha &\iff
+x = (\frac{\alpha}{c}u)^{\frac{1}{\alpha}} , &0 < x < 1, \\
+u = c(\alpha^{-1}+e^{-1}-e^{-x}) &\iff x=-\text{log}(\alpha^{-1}+e^{-1}-\frac{u}{c}), &1\leq x,
+\end{cases}
+\] and the boundary \(x=1\) is equivalent to \(u=\frac{c}{\alpha}\).
+Hence the inverse of the cumulative distribution is \[
+G^{-1}(u) = 
+\begin{cases}
+(\frac{\alpha}{c}u)^{\frac{1}{\alpha}} , &0 < u < \frac{c}{\alpha}, \\
+-\text{log}(\alpha^{-1}+e^{-1}-e^{-x}), &\frac{c}{\alpha} \leq u, \\
+0, &\text{otherwise}.
+\end{cases}
+\] The normalising constant \(c\) is found by integrating \(g(x)\) over
+its domain and let the integral equal 1. \[
+\int_0^\infty g(x)dx = c(\alpha^{-1}+e^{-1})=1 \iff c =\frac{\alpha e}{\alpha+e}.
+\] Now we can sample from \(g(x)\) by generating
+\(u\sim \mathcal{U}[0,1]\) and returning \(G^{-1}(u)\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Function for normalising constant in g distribution given parameter a (=alpha).}
+\NormalTok{c.g <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(a)\{}
+  \KeywordTok{return}\NormalTok{ (a}\OperatorTok{*}\KeywordTok{exp}\NormalTok{(}\DecValTok{1}\NormalTok{)}\OperatorTok{/}\NormalTok{(a}\OperatorTok{+}\KeywordTok{exp}\NormalTok{(}\DecValTok{1}\NormalTok{)))}
+\NormalTok{\}}
+
+\CommentTok{#Normalised density function for g (for plot)}
+\NormalTok{g <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(x, a) \{}
+\NormalTok{  c <-}\StringTok{ }\KeywordTok{c.g}\NormalTok{(a)}
+\NormalTok{  out <-}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{0}\NormalTok{, }\KeywordTok{length}\NormalTok{(x))}
+\NormalTok{  left <-}\StringTok{ }\DecValTok{0} \OperatorTok{<}\StringTok{ }\NormalTok{x }\OperatorTok{&}\StringTok{ }\NormalTok{x }\OperatorTok{<}\StringTok{ }\DecValTok{1}
+\NormalTok{  right <-}\StringTok{ }\DecValTok{1} \OperatorTok{<=}\StringTok{ }\NormalTok{x}
+\NormalTok{  out[left] <-}\StringTok{ }\NormalTok{c }\OperatorTok{*}\StringTok{ }\NormalTok{(x[left] }\OperatorTok{^}\StringTok{ }\NormalTok{(a }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{))}
+\NormalTok{  out[right] <-}\StringTok{ }\NormalTok{c }\OperatorTok{*}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{-}\NormalTok{x[right])}
+\KeywordTok{return}\NormalTok{(out)}
+\NormalTok{\}}
+
+\CommentTok{#This function returns a vector of n independent samples from the g distribution with parameter a (=alpha), generated from the inverse cumulative distribution. }
+\NormalTok{random.g <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n,a)\{}
+\NormalTok{  c <-}\StringTok{ }\KeywordTok{c.g}\NormalTok{(a) }\CommentTok{#Normalising constant}
+\NormalTok{  u <-}\StringTok{ }\KeywordTok{runif}\NormalTok{(n)}
+\NormalTok{  x <-}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{0}\NormalTok{,n)}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n)\{}
+    \ControlFlowTok{if}\NormalTok{ (u[i]}\OperatorTok{<}\NormalTok{c}\OperatorTok{/}\NormalTok{a)\{}
+\NormalTok{      x[i] <-}\StringTok{ }\NormalTok{(a}\OperatorTok{*}\NormalTok{u[i]}\OperatorTok{/}\NormalTok{c)}\OperatorTok{^}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{a)}
+\NormalTok{    \}}
+    \ControlFlowTok{else}\NormalTok{\{}
+\NormalTok{      x[i] <-}\StringTok{ }\NormalTok{(}\OperatorTok{-}\KeywordTok{log}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{a }\OperatorTok{+}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\OperatorTok{-}\DecValTok{1}\NormalTok{) }\OperatorTok{-}\StringTok{ }\NormalTok{u[i]}\OperatorTok{/}\NormalTok{c))}
+\NormalTok{    \}}
+\NormalTok{  \}}
+  \KeywordTok{return}\NormalTok{(x)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+The analytical mean and variance of \(X\sim g(x)\) are computed in the
+usual way \begin{align}
+\text{E}(X) &=\int_0^\infty xg(x)dx=\frac{c}{\alpha+1}+\frac{2c}{e}, \\
+\text{E}(X^2) &=\int_0^\infty x^2g(x)dx=\frac{c}{\alpha+2}+\frac{5c}{e}, \\
+\text{Var}(X) &=\text{E}(X^2)-(\text{E}(X))^2 = c(\frac{1}{\alpha+2}+\frac{5}{e})-(\frac{c}{\alpha+1}+\frac{2c}{e})^2. 
+\end{align}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Testing funtion}
+\NormalTok{a <-}\StringTok{ }\FloatTok{.6} \CommentTok{#parameter}
+\NormalTok{c <-}\StringTok{ }\KeywordTok{c.g}\NormalTok{(a) }\CommentTok{#normalising constant}
+\NormalTok{g.mean <-}\StringTok{ }\NormalTok{c}\OperatorTok{/}\NormalTok{(a}\OperatorTok{+}\DecValTok{1}\NormalTok{)}\OperatorTok{+}\DecValTok{2}\OperatorTok{*}\NormalTok{c}\OperatorTok{*}\KeywordTok{exp}\NormalTok{(}\OperatorTok{-}\DecValTok{1}\NormalTok{) }\CommentTok{#analytical mean}
+\NormalTok{g.var <-}\StringTok{ }\NormalTok{c}\OperatorTok{*}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{(a}\OperatorTok{+}\DecValTok{2}\NormalTok{)}\OperatorTok{+}\StringTok{ }\DecValTok{5}\OperatorTok{*}\KeywordTok{exp}\NormalTok{(}\OperatorTok{-}\DecValTok{1}\NormalTok{)) }\OperatorTok{-}\StringTok{ }\NormalTok{g.mean}\OperatorTok{^}\DecValTok{2} \CommentTok{#analytical variance}
+\KeywordTok{test.function}\NormalTok{(}\DecValTok{10000}\NormalTok{,random.g,a,g.mean,g.var)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical mean: 0.6743793 Analytical mean: 0.6688268 
+## Empirical variance: 0.6433624 Analytical variance: 0.6457955
+\end{verbatim}
+
+The mean and variance of the sample is close to the theoretical values.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Making histogram of sample from g}
+\NormalTok{sample.g <-}\StringTok{ }\KeywordTok{enframe}\NormalTok{(}\KeywordTok{random.g}\NormalTok{(}\DecValTok{100000}\NormalTok{,a))}
+
+\KeywordTok{ggplot}\NormalTok{() }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}
+    \DataTypeTok{data =} \KeywordTok{data.frame}\NormalTok{(sample.g),}
+    \DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{value, }\DataTypeTok{y=}\NormalTok{..density..),}
+    \DataTypeTok{binwidth =} \FloatTok{0.01}\NormalTok{,}
+    \DataTypeTok{na.rm =} \OtherTok{TRUE}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}
+    \KeywordTok{aes}\NormalTok{(}\DataTypeTok{xintercept=}\KeywordTok{mean}\NormalTok{(sample.g}\OperatorTok{$}\NormalTok{value),}
+        \DataTypeTok{col=}\StringTok{'Empirical mean'}\NormalTok{)}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{stat_function}\NormalTok{(}
+    \DataTypeTok{fun =}\NormalTok{ g,}
+    \DataTypeTok{args =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{a=}\NormalTok{a),}
+    \KeywordTok{aes}\NormalTok{(}\DataTypeTok{col=}\StringTok{'Theoretical density'}\NormalTok{)}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{2}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{5}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{labs}\NormalTok{(}
+      \DataTypeTok{caption =} \KeywordTok{bquote}\NormalTok{(}\StringTok{"Histogram of sample from g-distribution with "}\OperatorTok{~}\NormalTok{alpha}\OperatorTok{*}\StringTok{"=0.6 compared to theoretical density."}\NormalTok{)}
+\NormalTok{    )}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Project1_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+The histogram and density function coincide and that further indicates
+that the implementation is correct.
+
+The Box-Müller algorithm samples from the bivariate standard normal
+distribution. We first generate \(x_1 \sim \mathcal{U}(0,2\pi)\) and
+\(x_2 \sim \text{exp}(\frac{1}{2})\) and then return
+\(y_1=\sqrt{x_2}\text{cos}(x_1)\) and \(y_2=\sqrt{x_2}\text{sin}(x_1)\).
+We want to generate a vector of \(n\) independent samples from the
+standard normal distribution. Thus we only keep \(y_1\) from each
+bivariate sample.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#This function returns a vector of n independent samples from the standard normal distribution, generated by the Box-Müller algorithm}
+\NormalTok{random.norm <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n)\{}
+\NormalTok{  x1 <-}\StringTok{ }\KeywordTok{runif}\NormalTok{(n)}\OperatorTok{*}\DecValTok{2}\OperatorTok{*}\NormalTok{pi}
+\NormalTok{  x2 <-}\StringTok{ }\KeywordTok{random.exp}\NormalTok{(n,.}\DecValTok{5}\NormalTok{)}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{sqrt}\NormalTok{(x2)}\OperatorTok{*}\KeywordTok{cos}\NormalTok{(x1))}
+\NormalTok{\}}
+
+\CommentTok{#Testing function}
+\NormalTok{sample.normal=}\KeywordTok{enframe}\NormalTok{(}\KeywordTok{random.norm}\NormalTok{(}\DecValTok{100000}\NormalTok{))}
+\KeywordTok{cat}\NormalTok{(}\StringTok{"Empirical mean:"}\NormalTok{, }\KeywordTok{mean}\NormalTok{(sample.normal), }\StringTok{"Analytical mean:"}\NormalTok{,}\FloatTok{0.0}\NormalTok{, }\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in mean.default(sample.normal): argument is not numeric or logical:
+## returning NA
+\end{verbatim}
+
+\begin{verbatim}
+## Empirical mean: NA Analytical mean: 0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{cat}\NormalTok{(}\StringTok{"Empirical variance:"}\NormalTok{, }\KeywordTok{var}\NormalTok{(sample.normal), }\StringTok{"Analytical variance:"}\NormalTok{,}\FloatTok{1.0}\NormalTok{,}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical variance: 833341667 -14.04086 -14.04086 0.9967384 Analytical variance: 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{() }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}
+    \DataTypeTok{data =} \KeywordTok{data.frame}\NormalTok{(sample.normal),}
+    \DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{value, }\DataTypeTok{y=}\NormalTok{..density..),}
+    \DataTypeTok{binwidth =} \FloatTok{0.01}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}
+    \KeywordTok{aes}\NormalTok{(}\DataTypeTok{xintercept=}\KeywordTok{mean}\NormalTok{(sample.normal}\OperatorTok{$}\NormalTok{value),}
+        \DataTypeTok{col=}\StringTok{'Empirical mean'}\NormalTok{)}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{stat_function}\NormalTok{(}
+    \DataTypeTok{fun =}\NormalTok{ dnorm,}
+    \KeywordTok{aes}\NormalTok{(}\DataTypeTok{col=}\StringTok{'Theoretical density'}\NormalTok{)}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}
+    \DataTypeTok{caption =} \KeywordTok{expression}\NormalTok{(}\StringTok{"Histogram of sample from standard normal distribution compared to theoretical density."}\NormalTok{)}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Project1_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+The empirical mean and variance are close to the analytical values so
+the implementation seems correct. The histogram of the samples is also
+just like expected.
+
+Now we want to sample from a d-variate normal distribution with mean
+vector \(\boldsymbol{\mu}\) and covariance matrix \(\mathbf{\Sigma}\).
+This is done by generating a vector \(\boldsymbol{x}\) of \(d\) standard
+normal samples and doing the transform
+\(\boldsymbol{y}=\mathbf{A}\boldsymbol{x}+\boldsymbol{\mu}\) where
+\(\mathbf{AA^T=\Sigma}\). We find \(\mathbf{A}\) by the cholesky
+decomposition of \(\mathbf{\Sigma}\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#This function returns a sample from the d-variate normal distribution with mean mu and covariance S, transformed from standard normal samples. }
+\NormalTok{random.multinorm <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(d,mu,S)\{}
+\NormalTok{  x <-}\StringTok{ }\KeywordTok{random.norm}\NormalTok{(d)}
+\NormalTok{  A <-}\StringTok{ }\KeywordTok{t}\NormalTok{(}\KeywordTok{chol}\NormalTok{(S)) }\CommentTok{#transpose to get lower triangular cholesky matrix}
+  \KeywordTok{return}\NormalTok{(mu }\OperatorTok{+}\StringTok{ }\NormalTok{A}\OperatorTok{%*%}\NormalTok{x)}
+\NormalTok{\}}
+
+\CommentTok{#Testing function}
+\NormalTok{d =}\StringTok{ }\DecValTok{3}
+\NormalTok{N =}\StringTok{ }\DecValTok{10000}
+\NormalTok{sigma <-}\StringTok{ }\KeywordTok{cbind}\NormalTok{(}\KeywordTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{0}\NormalTok{), }\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{,}\DecValTok{1}\NormalTok{), }\KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{)) }\CommentTok{#if d=3}
+\CommentTok{# sigma <- cbind(c(2,1),c(1,2))                  #if d=2}
+\NormalTok{mu <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\DecValTok{1}\NormalTok{,d)}
+\NormalTok{multinormal.sample <-}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\OtherTok{NA}\NormalTok{,N,d)}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N)\{}
+\NormalTok{  multinormal.sample[i,] <-}\StringTok{ }\KeywordTok{random.multinorm}\NormalTok{(d, mu, sigma)}
+\NormalTok{\}}
+\CommentTok{#Theoretical mean vector:}
+\NormalTok{mu}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1 2 3
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Empirical mean vector:}
+\KeywordTok{colMeans}\NormalTok{(multinormal.sample)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1.015444 1.987524 3.019864
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Empirical covariance matrix:}
+\NormalTok{sigma}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      [,1] [,2] [,3]
+## [1,]    3    1    0
+## [2,]    1    3    1
+## [3,]    0    1    3
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Theoretical covariance matrix:}
+\KeywordTok{var}\NormalTok{(multinormal.sample)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             [,1]      [,2]        [,3]
+## [1,]  3.00486175 0.9818252 -0.07871358
+## [2,]  0.98182524 2.9452353  0.96102562
+## [3,] -0.07871358 0.9610256  3.00661956
+\end{verbatim}
+
+We see that the empirical moments are very close to the real values.
+
+\hypertarget{problem-b-the-gamma-distribution}{%
+\section{Problem B: The gamma
+distribution}\label{problem-b-the-gamma-distribution}}
+
+First, we consider the gamma distribution with parameters
+\(\alpha \in (0,1)\) and \(\beta=1\). To generate samples from \(f(x)\),
+we use rejection sampling with \(g(x)\) as proposal density. We need to
+find a \(k>1\) such that \(k\geq\frac{f(x)}{g(x)}\). \[
+\frac{f(x)}{g(x)}=\begin{cases}\frac{1}{c\Gamma(\alpha)}e^{-x}, & 0<x<1 \\ \frac{1}{c\Gamma(\alpha)}x^{\alpha -1}, & 1 \leq x \end{cases}\leq \frac{1}{c\Gamma(\alpha)}=k
+\] Hence, the acceptance probability in the rejection sampling is
+
+\[
+\alpha=\frac{1}{k}\frac{f(x)}{g(x)}=c\Gamma(\alpha)\frac{f(x)}{g(x)}=\begin{cases}e^{-x}, & 0<x<1 \\ x^{\alpha -1}, & 1 \leq x \end{cases}.
+\]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Acceptance probability}
+\NormalTok{accept_prob <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(x,a)\{ }
+  \ControlFlowTok{if}\NormalTok{ (x}\OperatorTok{<}\DecValTok{1}\NormalTok{)}
+      \KeywordTok{return}\NormalTok{ (}\KeywordTok{exp}\NormalTok{(}\OperatorTok{-}\NormalTok{x))}
+    \ControlFlowTok{else} 
+      \KeywordTok{return}\NormalTok{ (x}\OperatorTok{^}\NormalTok{(a}\DecValTok{-1}\NormalTok{))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#This function returns a vector of n independent samples from the gamma distribution with 0<a<1, beta=1, generated by the Rejection sampling}
+\NormalTok{random.gamma1 <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n,a)\{ }
+\NormalTok{  x=}\KeywordTok{rep}\NormalTok{(}\DecValTok{0}\NormalTok{,n)}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n)\{}
+\NormalTok{    finish =}\StringTok{ }\DecValTok{0}
+    \ControlFlowTok{while}\NormalTok{(finish}\OperatorTok{==}\DecValTok{0}\NormalTok{)\{  }
+      \CommentTok{# Sample from the proposal distribution, g(x) (x>=0)}
+\NormalTok{      sample.x =}\StringTok{ }\KeywordTok{random.g}\NormalTok{(}\DecValTok{1}\NormalTok{,a)}
+      \CommentTok{# Compute the acceptance probability alpha}
+\NormalTok{      alpha=}\KeywordTok{accept_prob}\NormalTok{(sample.x,a)}
+      \CommentTok{# Generate a helping variable U from a uniform(0,1)}
+\NormalTok{      u =}\StringTok{ }\KeywordTok{runif}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{)}
+      \CommentTok{# Check if we accept it}
+      \ControlFlowTok{if}\NormalTok{(u }\OperatorTok{<=}\StringTok{ }\NormalTok{alpha)\{}
+\NormalTok{        x[i]=sample.x}
+\NormalTok{        finish=}\DecValTok{1}
+\NormalTok{      \}}
+\NormalTok{    \}}
+\NormalTok{  \}}
+  \KeywordTok{return}\NormalTok{ (x)}
+\NormalTok{\}}
+
+\CommentTok{#Testing function}
+\NormalTok{alpha=}\FloatTok{0.5}
+\KeywordTok{test.function}\NormalTok{(}\DecValTok{10000}\NormalTok{,random.gamma1,alpha,alpha,alpha)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical mean: 0.4883178 Analytical mean: 0.5 
+## Empirical variance: 0.4766656 Analytical variance: 0.5
+\end{verbatim}
+
+The printout shows that the empirical mean and variance are close to the
+analytical values so the implementation seems correct.
+
+Now we consider the gamma distribution with parameters \(\alpha>1\) and
+\(\beta=1\). To use ratio of uniforms method to simulate from this
+distrubution, we need to find \(C_f\subset[0,a] \times [b_-,b_+]\).
+First we find the value of \(a=\sqrt{sup_xf^*(x)}\). \[
+\frac{d}{dx}f^*(x)=(\alpha-1)x^{\alpha-2}e^{-x}-e^{-x}x^{\alpha-1}=e^{-x}x^{\alpha-2}(\alpha-1-x)=0 \Rightarrow x=\alpha-1  \lor x=0
+\] \(f^*(x)\) has its maximum when \(x=\alpha-1\), hence
+\(a=\sqrt{f^*(\alpha-1)}=\sqrt{(\alpha-1)^{\alpha-1}e^{-\alpha+1}}\).
+
+Then, we have to find the values of \(b_+=\sqrt{sup_{x\geq0}x^2f^*(x)}\)
+and \(b_-=-\sqrt{sup_{x\leq0}x^2f^*(x)}\). Since \(f^*(x)=0\) for
+\(x\leq0\), we have \(b_-=0\). \[
+\frac{d}{dx}x^2f^*(x)=e^{-x}x^{\alpha}(\alpha+1-x)=0 \Rightarrow x=\alpha+1     \lor x=0
+\] \(x^2f^*(x)\) has its maximum when \(x=\alpha+1\), hence
+\(b_+=\sqrt{(\alpha+1)f^*(\alpha+1)}=\sqrt{(\alpha+1)^{\alpha+1}e^{-\alpha-1}}\).
+
+To avoid overflow, we implement the algorithm on log-scale,
+\(u=log(x)\). Hence, we define
+\(C_f=\{ (u_1,u_2):0\leq u_1 \leq 0.5{f^*(e^{u_2-u_1})}\}\) where \[
+f^*(e^u)=\begin{cases} u(\alpha-1)-e^u, & 0<x \\ 0, & othetwise \end{cases}.
+\]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{logf <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(u,alpha)\{ }\CommentTok{#log of f* with u=log(x)}
+  \KeywordTok{return}\NormalTok{ (u}\OperatorTok{*}\NormalTok{(alpha}\DecValTok{-1}\NormalTok{)}\OperatorTok{-}\KeywordTok{exp}\NormalTok{(u))}
+\NormalTok{\}}
+
+\NormalTok{sample <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(ab)\{ }\CommentTok{#This function sample from the distribution of log(x), using the inverse of the cumulative distribution. }
+\NormalTok{  u=}\KeywordTok{log}\NormalTok{(}\KeywordTok{runif}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{))}
+  \KeywordTok{return}\NormalTok{ (ab}\OperatorTok{+}\NormalTok{u)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#This function returns a vector of n independent samples from the gamma distribution with a>1, beta=1, generated by the ratio of uniforms method on log-scale. }
+\NormalTok{random.gamma2 <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n,alpha)\{}
+\NormalTok{  count=}\DecValTok{0} \CommentTok{#count how many tries the algorithm needs to generate n realisations}
+\NormalTok{  x=}\KeywordTok{rep}\NormalTok{(}\DecValTok{0}\NormalTok{,n)}
+\NormalTok{  a=(alpha}\DecValTok{-1}\NormalTok{)}\OperatorTok{/}\DecValTok{2}\OperatorTok{*}\NormalTok{(}\KeywordTok{log}\NormalTok{(alpha}\DecValTok{-1}\NormalTok{)}\OperatorTok{-}\DecValTok{1}\NormalTok{)}
+\NormalTok{  b=(alpha}\OperatorTok{+}\DecValTok{1}\NormalTok{)}\OperatorTok{/}\DecValTok{2}\OperatorTok{*}\NormalTok{(}\KeywordTok{log}\NormalTok{(alpha}\OperatorTok{+}\DecValTok{1}\NormalTok{)}\OperatorTok{-}\DecValTok{1}\NormalTok{)}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n)\{}
+\NormalTok{    inside=}\OtherTok{FALSE}
+    \ControlFlowTok{while}\NormalTok{ (inside}\OperatorTok{==}\OtherTok{FALSE}\NormalTok{)\{}
+\NormalTok{      u1=}\KeywordTok{sample}\NormalTok{(a) }
+\NormalTok{      u2=}\KeywordTok{sample}\NormalTok{(b)}
+\NormalTok{      u=u2}\OperatorTok{-}\NormalTok{u1}
+\NormalTok{      test=}\FloatTok{0.5}\OperatorTok{*}\KeywordTok{logf}\NormalTok{(u,alpha)}
+\NormalTok{      inside=test}\OperatorTok{>=}\NormalTok{u1 }
+\NormalTok{      count=count}\OperatorTok{+}\DecValTok{1}
+\NormalTok{    \}}
+\NormalTok{    x[i] =}\StringTok{ }\NormalTok{u}
+\NormalTok{  \}}
+\NormalTok{  vec=}\KeywordTok{c}\NormalTok{(count,}\KeywordTok{exp}\NormalTok{(x)) }\CommentTok{#count + n realisations}
+\NormalTok{\}}
+
+\CommentTok{#Testing function }
+\NormalTok{alpha=}\DecValTok{2000}
+\NormalTok{ex.gamma2=}\KeywordTok{random.gamma2}\NormalTok{(}\DecValTok{1000}\NormalTok{,alpha)}
+\KeywordTok{cat}\NormalTok{(}\StringTok{"Empirical mean:"}\NormalTok{,}\KeywordTok{mean}\NormalTok{(ex.gamma2[}\OperatorTok{-}\DecValTok{1}\NormalTok{]), }\StringTok{"Analytical mean:"}\NormalTok{,alpha, }\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical mean: 2000.652 Analytical mean: 2000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{cat}\NormalTok{(}\StringTok{"Empirical variance:"}\NormalTok{, }\KeywordTok{var}\NormalTok{(ex.gamma2[}\OperatorTok{-}\DecValTok{1}\NormalTok{]), }\StringTok{"Analytical variance:"}\NormalTok{,alpha,}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical variance: 2043.314 Analytical variance: 2000
+\end{verbatim}
+
+The empirical mean and variance are close to the analytical values so
+the implementation seems correct.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Generate a plot with values of alpha on the x-axis and the number of tries used on the y-axis. }
+\NormalTok{plot.count <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(nsample, n)\{}
+\NormalTok{  count=}\KeywordTok{rep}\NormalTok{(}\DecValTok{0}\NormalTok{,n)}
+\NormalTok{  alpha=}\KeywordTok{seq}\NormalTok{(}\FloatTok{1.01}\NormalTok{,}\DecValTok{2000}\NormalTok{,}\DataTypeTok{length.out=}\NormalTok{n)}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n)\{}
+\NormalTok{    a=alpha[i]}
+\NormalTok{    c=}\KeywordTok{random.gamma2}\NormalTok{(nsample,a)[}\DecValTok{1}\NormalTok{]}
+\NormalTok{    count[i]=c}
+\NormalTok{  \}}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{cbind}\NormalTok{(alpha,count))}
+\NormalTok{\}}
+\NormalTok{num.trials <-}\StringTok{ }\KeywordTok{plot.count}\NormalTok{(}\DecValTok{1000}\NormalTok{, }\DecValTok{100}\NormalTok{)}
+\NormalTok{num.trials.frame <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(num.trials)}
+\KeywordTok{ggplot}\NormalTok{() }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}
+    \DataTypeTok{data=}\NormalTok{num.trials.frame,}
+    \DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{alpha, }\DataTypeTok{y=}\NormalTok{count)}
+\NormalTok{  ) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}
+    \DataTypeTok{caption =} \KeywordTok{expression}\NormalTok{(}\StringTok{"Number of trials needed to generate 1000 samples from gamma distribution as a function of "}\OperatorTok{*}\NormalTok{alpha)}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Project1_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+From the plot we can see that the number of tries the algorithm needs to
+generate \(n=1000\) realisations increases almost logarithmic with the
+value of \(\alpha\). The acceptance probability decreases as the value
+of \(\alpha\) increases, since the proportion of the total area
+\(\left[0, a\right] \times \left[0, b_+\right]\) covered by \(C_f\)
+shrinks as \(\alpha\) increases. The proportion shrinks fastest in the
+beginning and tapers off when alpha becomes larger.
+
+By using the above functions and
+\(X \sim Ga(\alpha,1) \Leftrightarrow X/\beta \sim Ga(\alpha, \beta)\),
+we write a function that generates a vector of n independent samples
+from the gamma distribution with parameters \(\alpha\) and \(\beta\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{##This function returns a vector of n independent samples from the gamma distribution with parameters alpha and beta. }
+\NormalTok{random.gamma <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n, alpha, beta)\{}
+  \ControlFlowTok{if}\NormalTok{ (alpha}\OperatorTok{==}\DecValTok{1}\NormalTok{)\{}
+\NormalTok{    x=}\KeywordTok{random.exp}\NormalTok{(n,alpha) }\CommentTok{#sample from exponential distribution}
+\NormalTok{  \}}
+  \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (alpha}\OperatorTok{<}\DecValTok{1}\NormalTok{)\{}
+\NormalTok{    x=}\KeywordTok{random.gamma1}\NormalTok{(n,alpha) }
+\NormalTok{  \}}
+  \ControlFlowTok{else}\NormalTok{ \{}
+\NormalTok{    x=}\KeywordTok{random.gamma2}\NormalTok{(n,alpha)[}\OperatorTok{-}\DecValTok{1}\NormalTok{] }\CommentTok{#ignoring the first element, which is the number of tries. }
+\NormalTok{  \}}
+  \KeywordTok{return}\NormalTok{ (x}\OperatorTok{/}\NormalTok{beta) }\CommentTok{#Transform from x-Ga(alpha,1) to x/beta-Ga(alpha,beta)}
+\NormalTok{\}}
+
+\CommentTok{#Testing function }
+\NormalTok{test.gamma <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n,alpha, beta)\{}
+\NormalTok{  ex.gamma=}\KeywordTok{random.gamma}\NormalTok{(n,alpha,beta)}
+\NormalTok{  amean=alpha}\OperatorTok{/}\NormalTok{beta }\CommentTok{#analytical mean}
+\NormalTok{  avar=alpha}\OperatorTok{/}\NormalTok{beta}\OperatorTok{^}\DecValTok{2} \CommentTok{#analytical variance}
+  \KeywordTok{cat}\NormalTok{(}\StringTok{"Empirical mean:"}\NormalTok{, }\KeywordTok{mean}\NormalTok{(ex.gamma), }\StringTok{"Analytical mean:"}\NormalTok{,amean, }\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+  \KeywordTok{cat}\NormalTok{(}\StringTok{"Empirical variance:"}\NormalTok{, }\KeywordTok{var}\NormalTok{(ex.gamma), }\StringTok{"Analytical variance:"}\NormalTok{,avar,}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\}}
+
+\NormalTok{plot.gamma <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n,alphav,betav)\{}
+\NormalTok{  sample.gamma <-}\StringTok{ }\KeywordTok{enframe}\NormalTok{(}\KeywordTok{random.gamma}\NormalTok{(n,}\DataTypeTok{alpha=}\NormalTok{alphav,}\DataTypeTok{beta=}\NormalTok{betav))}
+  \KeywordTok{ggplot}\NormalTok{() }\OperatorTok{+}
+\StringTok{    }\KeywordTok{geom_histogram}\NormalTok{(}
+      \DataTypeTok{data =} \KeywordTok{data.frame}\NormalTok{(sample.gamma),}
+      \DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{value, }\DataTypeTok{y=}\NormalTok{..density..),}
+      \DataTypeTok{binwidth =} \FloatTok{0.01}\NormalTok{,}
+      \DataTypeTok{boundary =} \DecValTok{0}\NormalTok{,}
+      \DataTypeTok{na.rm =} \OtherTok{TRUE}
+\NormalTok{    ) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{geom_vline}\NormalTok{(}
+      \KeywordTok{aes}\NormalTok{(}\DataTypeTok{xintercept=}\KeywordTok{mean}\NormalTok{(sample.gamma}\OperatorTok{$}\NormalTok{value),}
+          \DataTypeTok{col=}\StringTok{'Empirical mean'}\NormalTok{)}
+\NormalTok{    ) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{stat_function}\NormalTok{(}
+      \DataTypeTok{fun =} \KeywordTok{partial}\NormalTok{(dgamma, }\DataTypeTok{shape=}\NormalTok{alphav, }\DataTypeTok{rate=}\NormalTok{betav),}
+      \KeywordTok{aes}\NormalTok{(}\DataTypeTok{col=}\StringTok{'Theoretical density'}\NormalTok{)}
+\NormalTok{    ) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{ylim}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{3}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{xlim}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{5}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{labs}\NormalTok{(}
+      \DataTypeTok{caption =} \KeywordTok{bquote}\NormalTok{(}\StringTok{"Histogram of sample from gamma distribution with "} \OperatorTok{~}\StringTok{ }\NormalTok{alpha }\OperatorTok{*}\StringTok{ "="} \OperatorTok{~}\StringTok{ }\NormalTok{.(alphav) }\OperatorTok{~}\StringTok{ " and "} \OperatorTok{~}\StringTok{ }\NormalTok{beta }\OperatorTok{*}\StringTok{"="}\OperatorTok{*}\StringTok{ }\NormalTok{.(betav) }\OperatorTok{~}\StringTok{ " compared to theoretical density."}\NormalTok{)}
+\NormalTok{    )}
+\NormalTok{\}}
+\KeywordTok{test.gamma}\NormalTok{(}\DecValTok{100000}\NormalTok{,}\FloatTok{0.5}\NormalTok{,}\FloatTok{0.7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical mean: 0.7145534 Analytical mean: 0.7142857 
+## Empirical variance: 1.010513 Analytical variance: 1.020408
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{test.gamma}\NormalTok{(}\DecValTok{100000}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical mean: 0.33291 Analytical mean: 0.3333333 
+## Empirical variance: 0.1111121 Analytical variance: 0.1111111
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{test.gamma}\NormalTok{(}\DecValTok{100000}\NormalTok{,}\DecValTok{4}\NormalTok{,}\DecValTok{10}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Empirical mean: 0.3997344 Analytical mean: 0.4 
+## Empirical variance: 0.04020034 Analytical variance: 0.04
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot.gamma}\NormalTok{(}\DecValTok{100000}\NormalTok{,}\FloatTok{0.5}\NormalTok{,}\FloatTok{0.7}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Project1_files/figure-latex/unnamed-chunk-15-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot.gamma}\NormalTok{(}\DecValTok{100000}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Project1_files/figure-latex/unnamed-chunk-15-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot.gamma}\NormalTok{(}\DecValTok{100000}\NormalTok{,}\DecValTok{4}\NormalTok{,}\DecValTok{10}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Project1_files/figure-latex/unnamed-chunk-15-3.pdf}
+
+\hypertarget{problem-c-the-dirichlet-distribution-simulation-using-known-relations}{%
+\section{Problem C: The Dirichlet distribution: simulation using known
+relations}\label{problem-c-the-dirichlet-distribution-simulation-using-known-relations}}
+
+Let \(x=(x_1,\dots,x_K)\) be a vector of stochastic random variables
+where \(x_k\in[0,1]\) for \(k=1,\dots,K\) and \(\sum_{k=1}^Kx_k=1\). We
+assume \(z_k\sim \mathrm{gamma}(\alpha_k,1)\) independently for
+\(k=1,\dots,K\). The joint distribution is then given by
+
+\[
+f_Z(z_1,\dots,z_K) =
+\prod_{k=1}^K f_Z(z_k) = 
+\frac{1}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K}z_k^{\alpha_k-1} \dot{} e^{-\sum_{k=1}^Kz_k}.
+\]
+
+Let \(v=\sum_{i=1}^Kz_i\) and
+\(x_k=\frac{z_k}{z_1,\dots,z_K} = \frac{z_k}{v}\). Then
+\(z_k = g^{-1}(x_k,v) = vx_k\) and because the \(x_i\) sum to 1, the
+K-th variable can be written as \(z_K=(1-\sum_{k=1}^{K-1}x_i)v\). We can
+now find the Jacobian
+
+\begin{align*}
+\left\lvert \frac{\partial (z_1, \dots,z_K)}{\partial (x_1,\dots,x_{K-1},v)} \right\rvert 
+&=\left\lvert \frac{\partial (vx_1, \dots,vx_{K-1}, v(1-\sum_{k=1}^{K-1}x_k))}{\partial (x_1,\dots,x_{K-1},v)} \right\rvert \\
+
+&= 
+\begin{vmatrix}
+v & 0 & \cdots & 0 & x_1 \\ 
+0 & \ddots & \ddots & \vdots & \vdots \\
+\vdots & \ddots & \ddots & 0 &\vdots \\
+0 & \cdots & 0 & v & x_{K-1} \\
+-v & \cdots & \cdots & -v & 1-\sum_{k=1}^{K-1}x_k
+\end{vmatrix}
+= 
+\begin{vmatrix}
+v & 0 & \cdots & 0 & x_1 \\ 
+0 & \ddots & \ddots & \vdots & \vdots \\
+\vdots & \ddots & \ddots & 0 &\vdots \\
+0 & \cdots & 0 & v & x_{K-1} \\
+0 & \cdots & \cdots & 0 & 1 
+\end{vmatrix}
+=v^{K-1}.
+\end{align*}
+
+Thus, by the transformation formula we get the joint distribution
+
+\begin{align}
+f_{X,V}(x_1,\dots,x_{K-1},v)
+&= f_Z(vx_1,\dots,vx_{K-1},v\left(1-\sum_{k=1}^{K-1}x_k)\right) \dot{} \left\lvert \frac{\partial \left(vx_1, \dots,vx_{K-1}, v\left(1-\prod_{k=1}^{K-1}x_k\right)\right)}{\partial (x_1,\dots,x_{K-1},v)} \right\rvert \\
+&= \frac{1}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}(vx_k)^{\alpha_k-1} \dot{} \left(v\left(1-\prod_{k=1}^{K-1}x_k\right)\right)^{\alpha_K-1} \dot{} e^{-\sum_{k=1}^Kvx_k} \dot{} v^{K-1} \\
+&= \frac{v^{\sum_{k=1}^{K-1}(\alpha_k-1)+(\alpha_K-1)+(K-1)}e^{-v}}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1} \\
+&= \frac{v^{(\sum_{k=1}^{K}\alpha_k)-1}e^{-v}}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
+\end{align}
+
+And by integration the marginal distribution of \((x_1,\dots,x_{K-1})\)
+is \[
+f_X(x_1,\dots,x_{K-1})=  \frac{\int_0^\infty v^{(\sum_{k=1}^{K}\alpha_k)-1}e^{-v}dv}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
+\]
+\[= \frac{\Gamma(\sum_{k=1}^{K}\alpha_i)}{\prod_{k=1}^K\Gamma(\alpha_k)}\dot{} \prod_{k=1}^{K-1}x_k^{\alpha_k-1} \dot{} \left(1-\prod_{k=1}^{K-1}x_k\right)^{\alpha_K-1}
+\] which means \((x_1,\dots,x_K)\) has a Dirichlet distribution.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{##This function generates one realisation from Dirichlet distribution with parameter vector alpha.}
+\NormalTok{random.dirichlet <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(alpha)\{}
+\NormalTok{  K <-}\StringTok{ }\KeywordTok{length}\NormalTok{(alpha)}
+\NormalTok{  z <-}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\DecValTok{0}\NormalTok{,K)}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{K)}
+\NormalTok{    z[i] <-}\StringTok{ }\KeywordTok{random.gamma}\NormalTok{(}\DecValTok{1}\NormalTok{,alpha[i],}\DecValTok{1}\NormalTok{) }\CommentTok{#n,shape,rate}
+\NormalTok{  v <-}\StringTok{ }\KeywordTok{sum}\NormalTok{(z)}
+  \KeywordTok{return}\NormalTok{ (z}\OperatorTok{/}\NormalTok{v)}
+\NormalTok{\}}
+
+\NormalTok{N_dir <-}\StringTok{ }\DecValTok{1000}
+\NormalTok{alpha <-}\StringTok{ }\KeywordTok{c}\NormalTok{(.}\DecValTok{1}\NormalTok{, }\FloatTok{.5}\NormalTok{, }\FloatTok{.1}\NormalTok{, }\FloatTok{.3}\NormalTok{, }\FloatTok{.8}\NormalTok{)}
+\NormalTok{K <-}\StringTok{ }\KeywordTok{length}\NormalTok{(alpha)}
+\NormalTok{dirichlet.sample <-}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\DecValTok{1}\NormalTok{,N_dir,K)}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N_dir)\{}
+\NormalTok{  dirichlet.sample[i,] <-}\StringTok{ }\KeywordTok{random.dirichlet}\NormalTok{(alpha)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+The mean and variance of a random variable \(X_i\) from a Dirichlet
+distribution are \[
+\text{E}(X_i) = \frac{\alpha_i}{\sum_{k=1}^K\alpha_k} := \tilde \alpha_i
+\] and \[
+\text{Var}(X_i)=\frac{\tilde{\alpha_i}(1-\tilde \alpha_i)}{\sum_{k=1}^K\alpha_k +1}.
+\]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{alphasum <-}\StringTok{ }\KeywordTok{sum}\NormalTok{(alpha)}
+\CommentTok{#Empirical mean}
+\KeywordTok{colMeans}\NormalTok{(dirichlet.sample)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.04806490 0.27448330 0.05326399 0.15969966 0.46448816
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Analytical mean}
+\NormalTok{alpha1 <-}\StringTok{ }\NormalTok{alpha}\OperatorTok{/}\NormalTok{alphasum}
+\NormalTok{alpha1}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.05555556 0.27777778 0.05555556 0.16666667 0.44444444
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Empirical variance}
+\KeywordTok{diag}\NormalTok{(}\KeywordTok{var}\NormalTok{(dirichlet.sample))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.01421135 0.06992805 0.01751316 0.04842187 0.09044939
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Analytical variance}
+\NormalTok{alpha1}\OperatorTok{*}\NormalTok{(}\DecValTok{1}\OperatorTok{-}\NormalTok{alpha1)}\OperatorTok{/}\NormalTok{(}\DecValTok{1}\OperatorTok{+}\NormalTok{alphasum)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.01873898 0.07164903 0.01873898 0.04960317 0.08818342
+\end{verbatim}
+
+The empirical mean and variance are very close to the analytical values
+and thus the implementation seems good.
+
+\hypertarget{problem-d-rejection-sampling-and-importance-sampling}{%
+\section{Problem D: Rejection sampling and importance
+sampling}\label{problem-d-rejection-sampling-and-importance-sampling}}
+
+In this exercise we are interested in the posterior mean
+\(E\big[\theta|y\big]\). For \(\theta \in (0,1)\) the observed posterior
+density is
+\(f(\theta|y) \propto (2+\theta)^{125}(1-\theta)^{38}\theta^{34}\).
+
+First we implement a rejection sampling algorithm to simulate from
+\(f(\theta|y)\) using the uniform distribution \(\mathcal{U}(0, 1)\) as
+the proposal density. Hence, the acceptance probability is
+\(\alpha=\frac{1}{c}f(x)\)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{f <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(theta)\{ }\CommentTok{#The proportional function}
+  \KeywordTok{return}\NormalTok{ ((}\DecValTok{2}\OperatorTok{+}\NormalTok{theta)}\OperatorTok{^}\DecValTok{125}\OperatorTok{*}\NormalTok{(}\DecValTok{1}\OperatorTok{-}\NormalTok{theta)}\OperatorTok{^}\NormalTok{(}\DecValTok{18}\OperatorTok{+}\DecValTok{20}\NormalTok{)}\OperatorTok{*}\NormalTok{theta}\OperatorTok{^}\DecValTok{34}\NormalTok{) }
+\NormalTok{\}}
+
+\CommentTok{#Find the maxima of the proportional function }
+\NormalTok{res =}\StringTok{ }\KeywordTok{optimise}\NormalTok{(f, }\DataTypeTok{interval =} \KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{),}\DataTypeTok{maximum=}\OtherTok{TRUE}\NormalTok{) }
+\NormalTok{maxima=res}\OperatorTok{$}\NormalTok{objective}
+
+\NormalTok{new_f <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(theta)\{ }\CommentTok{#Normalised density function}
+  \KeywordTok{return}\NormalTok{ (}\KeywordTok{f}\NormalTok{(theta)}\OperatorTok{/}\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{integrate}\NormalTok{(f,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{)[}\DecValTok{1}\NormalTok{])) }
+\NormalTok{\}}
+
+\NormalTok{theta_new_f <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(theta)\{ }\CommentTok{#theta*normalised function}
+  \KeywordTok{return}\NormalTok{ (theta}\OperatorTok{*}\KeywordTok{new_f}\NormalTok{(theta))}
+\NormalTok{\}}
+
+\NormalTok{posterior <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(theta)\{ }\CommentTok{#proportional function with prior beta(1,5)}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{f}\NormalTok{(theta)}\OperatorTok{*}\NormalTok{(}\DecValTok{1}\OperatorTok{-}\NormalTok{theta)}\OperatorTok{^}\DecValTok{4}\NormalTok{)}
+\NormalTok{\}}
+
+\NormalTok{posterior.normalised <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(theta)\{ }\CommentTok{#normalised function with prior beta(1,5)}
+  \KeywordTok{posterior}\NormalTok{(theta)}\OperatorTok{/}\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{integrate}\NormalTok{(posterior,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{)[}\DecValTok{1}\NormalTok{])}
+\NormalTok{\}}
+
+\NormalTok{theta_new_f_g <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(theta)\{ }\CommentTok{#theta*normalised function with prior beta(1,5)}
+  \KeywordTok{return}\NormalTok{ (theta}\OperatorTok{*}\KeywordTok{posterior.normalised}\NormalTok{(theta))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#This algorithm simulate from f(theta|y) using a uniform density as the proposal density, rejection sampling.}
+\NormalTok{random.multinomial <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n)\{}
+\NormalTok{  x.out <-}\StringTok{ }\KeywordTok{rep}\NormalTok{(}\OtherTok{NA}\NormalTok{,n)}
+\NormalTok{  tries <-}\StringTok{ }\DecValTok{0}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{n)\{}
+\NormalTok{    finished <-}\StringTok{ }\OtherTok{FALSE}
+\NormalTok{    c <-}\StringTok{ }\NormalTok{maxima }\CommentTok{#res$objective}
+    \ControlFlowTok{while}\NormalTok{(}\OperatorTok{!}\NormalTok{finished)\{}
+\NormalTok{      x <-}\StringTok{ }\KeywordTok{runif}\NormalTok{(}\DecValTok{1}\NormalTok{) }\CommentTok{#sample from the proposal distribution, U(0,1)}
+\NormalTok{      alpha <-}\StringTok{ }\KeywordTok{f}\NormalTok{(x) }\OperatorTok{/}\StringTok{ }\NormalTok{c }\CommentTok{#compute the acceptance probability alpha}
+\NormalTok{      u <-}\StringTok{ }\KeywordTok{runif}\NormalTok{(}\DecValTok{1}\NormalTok{) }\CommentTok{#generate a helping variable U from a uniform(0,1)}
+      \ControlFlowTok{if}\NormalTok{ (u }\OperatorTok{<=}\StringTok{ }\NormalTok{alpha)\{ }\CommentTok{#Check if we accept it }
+\NormalTok{        finished <-}\StringTok{ }\OtherTok{TRUE}
+\NormalTok{      \}}
+\NormalTok{      tries=tries}\OperatorTok{+}\DecValTok{1} \CommentTok{#count how many random numbers the algorithm generates}
+\NormalTok{    \}}
+\NormalTok{    x.out[i] <-}\StringTok{ }\NormalTok{x }\CommentTok{#appending the values that get accepted (u<=alpha)}
+\NormalTok{  \}}
+  \KeywordTok{return}\NormalTok{(}\KeywordTok{list}\NormalTok{(}\DataTypeTok{theta =}\NormalTok{ x.out, }\DataTypeTok{tries =}\NormalTok{ tries))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+To estimate the posterior mean of \(\theta\) we use Monte-Carlo
+integration with M=10000 samples from \(f(\theta|y)\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{M=}\DecValTok{10000}
+\NormalTok{sample.multinomial <-}\StringTok{ }\KeywordTok{random.multinomial}\NormalTok{(M)}
+\KeywordTok{cat}\NormalTok{(}\StringTok{"Estimated posterior mean:"}\NormalTok{, }\KeywordTok{mean}\NormalTok{(sample.multinomial}\OperatorTok{$}\NormalTok{theta), }\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Estimated posterior mean: 0.6227546
+\end{verbatim}
+
+To check the value of the estimated posterior mean, we approximate it by
+numerically solving the integral \[
+E\big[\theta|y\big] = \int_0^1 \theta \cdot f(\theta | \textbf{y})~\text{d}\theta.
+\]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expected_mean=}\KeywordTok{integrate}\NormalTok{(theta_new_f,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{) }
+\KeywordTok{cat}\NormalTok{(}\StringTok{"Expected posterior mean:"}\NormalTok{, expected_mean}\OperatorTok{$}\NormalTok{value, }\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Expected posterior mean: 0.6228061
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sample.multinomial <-}\StringTok{ }\KeywordTok{enframe}\NormalTok{(}\KeywordTok{random.multinomial}\NormalTok{(}\DecValTok{100000}\NormalTok{)}\OperatorTok{$}\NormalTok{theta)}
+
+\KeywordTok{ggplot}\NormalTok{() }\OperatorTok{+}
+\StringTok{    }\KeywordTok{geom_histogram}\NormalTok{(}
+      \DataTypeTok{data =} \KeywordTok{data.frame}\NormalTok{(sample.multinomial),}
+      \DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{value, }\DataTypeTok{y=}\NormalTok{..density..),}
+      \DataTypeTok{binwidth =} \FloatTok{0.001}\NormalTok{,}
+      \DataTypeTok{boundary =} \DecValTok{0}\NormalTok{,}
+      \DataTypeTok{na.rm =} \OtherTok{TRUE}
+\NormalTok{    ) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{geom_vline}\NormalTok{(}
+      \KeywordTok{aes}\NormalTok{(}\DataTypeTok{xintercept=}\KeywordTok{mean}\NormalTok{(sample.multinomial}\OperatorTok{$}\NormalTok{value),}
+          \DataTypeTok{col=}\StringTok{'Empirical mean'}\NormalTok{)}
+\NormalTok{    ) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{stat_function}\NormalTok{(}
+      \DataTypeTok{fun =}\NormalTok{ new_f,}
+      \KeywordTok{aes}\NormalTok{(}\DataTypeTok{col=}\StringTok{'Theoretical density'}\NormalTok{)}
+\NormalTok{    ) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{labs}\NormalTok{(}
+      \DataTypeTok{caption =} \KeywordTok{expression}\NormalTok{(}\StringTok{"Histogram of sample from the posterior distribution compared to its theoretical density."}\NormalTok{)}
+\NormalTok{    )}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Project1_files/figure-latex/unnamed-chunk-21-1.pdf}
+
+The histogram indicates that the sampler works well since it has similar
+shape as the density function.
+
+To check how many random numbers our sampling algorithm need to generate
+on average in order to obtain one sample of \(f(\theta|\textbf{y})\) we
+divide the number of trials on \(M\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{average_theta_tries <-}\StringTok{ }\NormalTok{sample.multinomial}\OperatorTok{$}\NormalTok{tries }\OperatorTok{/}\NormalTok{M}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: Unknown or uninitialised column: 'tries'.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{cat}\NormalTok{(}\StringTok{"Average random numbers generated to obtain one sample:"}\NormalTok{, average_theta_tries,}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Average random numbers generated to obtain one sample:
+\end{verbatim}
+
+We would expect, on average, to generate \(c\) samples before one i
+accepted, since the overall acceptance rate is \(c^{-1}\). Since the
+proposal density is \(\mathcal{U}(0, 1)\), we have \(c\geq f(x)\).
+Hence, we can numerically calculate
+\(c = \max_{\theta \in [0, 1]} f(\theta | \textbf{y})\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{c=}\KeywordTok{optimize}\NormalTok{(new_f,}\DataTypeTok{interval =} \KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{),}\DataTypeTok{maximum=}\OtherTok{TRUE}\NormalTok{)}\OperatorTok{$}\NormalTok{objective}
+\KeywordTok{cat}\NormalTok{(}\StringTok{"Expected random numbers generated to obtain one sample:"}\NormalTok{, c, }\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Expected random numbers generated to obtain one sample: 7.799308
+\end{verbatim}
+
+The average of generated random numbers are close to the theoretical
+result, so the implementation of the algorithm seems correct.
+
+To estimate the posterior mean under the new prior
+\(g(\theta) \sim Beta(1,5)\) we use importance sampling with samples
+from \(f(\theta|y) ~\text{with}~ f(\theta) \sim Beta(1,1)\). Since
+neither \(f(\theta) \propto 1\) and \(g(\theta) \propto (1-\theta)^4\)
+are normalize, we use self-normalizing importance sampling to calculate
+the new posterior mean.
+
+\[
+\tilde{\mu}=\frac{\sum_{i=1}^{n}h(\theta_i)w(\theta_i)}{\sum_{i=1}^{n}w(\theta_i)},
+\] where \(h(\theta_i)=\theta_i\) is the samples from \(f(\theta|y)\)
+and \[
+w(\theta_i)=\frac{g(\theta_i)}{f(\theta_i)} \propto (1-\theta)^4.
+\]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{importance_sampling <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(n)\{ }
+\NormalTok{  theta <-}\StringTok{ }\KeywordTok{random.multinomial}\NormalTok{(n)}\OperatorTok{$}\NormalTok{theta }\CommentTok{#samples from f(theta|y) with the rejection sampling}
+\NormalTok{  w=(}\DecValTok{1}\OperatorTok{-}\NormalTok{theta)}\OperatorTok{^}\DecValTok{4} \CommentTok{#importance weight}
+\NormalTok{  mu <-}\StringTok{ }\KeywordTok{sum}\NormalTok{(theta}\OperatorTok{*}\NormalTok{w)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(w) }\CommentTok{#self-normalizing }
+  \KeywordTok{return}\NormalTok{(mu)}
+\NormalTok{\}}
+
+\NormalTok{mu.estimate <-}\StringTok{ }\KeywordTok{importance_sampling}\NormalTok{(}\DecValTok{10000}\NormalTok{)}
+\NormalTok{mu.estimate}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.5960878
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expected_mean=}\KeywordTok{integrate}\NormalTok{(theta_new_f_g,}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{) }
+\NormalTok{expected_mean}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 0.5959316 with absolute error < 9.7e-07
+\end{verbatim}
+
+The estimated mean is the same as the expected mean, which somewhat
+validates the implementation. We observe that this mean is smaller than
+with the uniform prior. This can be explained by the shape of the
+priors. While the \(Beta(1,1)\) is uniform on \([0,1]\), the
+\(Beta(1,5)\)-distribution is much larger for small \(\theta\) and close
+to 0 for \(\theta>0.75\). This necessarily leads to fewer samples for
+\(\theta\) close to 1, which again skewes the mean downwards.
+
+
+\end{document}
