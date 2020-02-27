@@ -10,17 +10,53 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Problem A: The coal-mining disaster data
+In this problem we are going to analyse a data set of time intervals between successive coal-mining disasters in the UK involving ten or more men killed in the periode March 15th 1851 to March 22nd 1962. 
 
 ## 1) 
+We start by making a plot with the cumulative number of disasters along the y-axis and year along the x-axis. 
 ```{r}
 library(boot)
 data <- coal
-plot(data$date, 1:191) #remove first and last
+plot(data$date, 1:191,xlab="year",ylab="cumulative number of disasters") #remove first and last
 ```
 
+From the plot we can see that the cumulative number of disasters increases almost linearly until around 1900 and that the ...
+
+Hence, we see that the incidence of coal-mining disasters was more frequent in the first hundred years and that the frequent of disasters become much smaller after around year 1945.
+
 ## 2) 
+For $n=1$ we are given the likelihood 
+$$
+f(x|t_1,\lambda_0,\lambda_1)=\lambda_0^{y_0}\lambda_1^{y_1}exp(-\lambda_0(t_1-t_0)-\lambda_1(t_2-t_1)),
+$$
+where $x$ is the observed data and $y_k$ is the number of observed disasters in the period $t_k$ to $t_{k+1}$. The priors $f(t_1)\sim \textrm{unif}(t_0,t_2)$ and $f(\lambda_i|\beta) \sim \textrm{gamma}(\alpha=2,\beta)$, for $\lambda_i=1,2$, are independent. For the hyper prior we use $f(\beta)\propto exp(-1/\beta) / \beta$.
+
+Hence, the posterior distribution for $\theta=(t_1,\lambda_0,\lambda_1,\beta)$ given $x$ up to a normalising constant is given by
+$$
+f(\theta|x)=\frac{f(\theta,x)}{f(x)}\propto f(\theta,x)=f(t_1)f(\beta)f(\lambda_0|\beta)f(\lambda_1|\beta)f(x|t_1,\lambda_0,\lambda_1)
+\propto f(\beta)f(\lambda_0|\beta)f(\lambda_1|\beta)f(x|t_1,\lambda_0,\lambda_1).
+$$
+By inserting the likelihood and the priors we get the posterior distribution 
+$$ 
+f(\theta|x)\propto
+\frac{1}{\beta^5}\lambda_0^{1+y_0}\lambda_1^{1+y_1}exp\left(-\frac{1}{\beta}(1+\lambda_0+\lambda_1)-\lambda_0(t_1-t_0)-\lambda_1(t_2-t_1)\right).
+$$
 
 ## 3) 
+To find the full conditionals for each of the elements in $\theta$ we omit all multiplicative factors in $f(\theta|x)$ that do not depend on the element. Thus we get the non normalised conditionals
+$$
+f(t_1|\lambda_0,\lambda_1,\beta,x)\propto exp(-\lambda_0(t_1-t_0)-\lambda_1(t_2-t_1))=exp(-t_1(\lambda_0-\lambda_1)),
+$$
+$$
+f(\lambda_0|t_1,\lambda_1,\beta,x)\propto \lambda_0^{1+y_0} exp\left(-\lambda_0(1/\beta+t_1-t_0)\right),
+$$
+$$
+f(\lambda_1|t_1,\lambda_0,\beta,x)\propto \lambda_1^{1+y_1} exp\left(-\lambda_1(1/\beta+t_2-t_1)\right),
+$$
+$$
+f(\beta|t_1,\lambda_0,\lambda_1,x)\propto \frac{1}{\beta^5}exp\left(-\frac{1}{\beta}(1+\lambda_0+\lambda_1)\right).
+$$
+From this we can see that $t_1$ belongs to the exponential distribution with $\beta=(\lambda_0-\lambda_1)^{-1}$ and that $\lambda_i$ belongs to the gamma distribution with the shape parameter $\alpha=2+y_i$ and scale parameter $\beta=(1/\beta+t_{i+1}-t_i)^{-1}$ for $i=1,2$.
 
 ## 4) 
 
