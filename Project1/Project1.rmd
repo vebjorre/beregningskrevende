@@ -339,7 +339,8 @@ logf <- function(u,alpha){ #log of f* with u=log(x)
   return (u*(alpha-1)-exp(u))
 }
 
-#This function sample uniformly from the [-inf,log(a)]X[-inf,log(b)] rectangles using the inverse of the cumulative distribution 
+#This function sample uniformly from the [-inf,log(a)]X[-inf,log(b)] rectangles using 
+#the inverse of the cumulative distribution 
 sample <- function(log_ab){ #log_ab is either log(a) or log(b)
   v=log(runif(1,0,1))
   return (log_ab+v) 
