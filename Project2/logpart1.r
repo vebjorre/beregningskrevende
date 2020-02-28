@@ -12,21 +12,21 @@ target <- function(x){
 
 fullcond <- function(x,r){
   if (r==1){
-    return (dexp(x[1], rate=1/(x[1]-x[2])))
+    return (log(dexp(x[1], rate=1/(x[1]-x[2]))))
   }
   else if (r==2){
-    return (dgamma(x[2], shape=x[5]+2, scale=1/(1/x[4]+x[1]-t0)))
+    return (log((dgamma(x[2], shape=x[5]+2, scale=1/(1/x[4]+x[1]-t0)))))
   }
   else if (r==3){
-    return (dgamma(x[3], shape=189-x[5]+2, scale=1/(1/x[4]+t2-x[1])))
+    return (log(dgamma(x[3], shape=189-x[5]+2, scale=1/(1/x[4]+t2-x[1]))))
   }
   else if (r==4){
-    return (1/x[4]^5 * exp(-1/x[4]*(1+x[2]+x[3])))
+    return (log(1/x[4]^5 * exp(-1/x[4]*(1+x[2]+x[3]))))
   }
 }
 
 fullcond.b1 <- function(x){
-  return( x[2]^(x[5]+1) * x[3]^(189-x[5]+1) * exp(-(1+x[2]+x[3])/x[4] + x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2) )
+  return (-5*log(x[4]) + log( x[2]^(x[5]+1) * x[3]^(189-x[5]+1) * exp(-(1+x[2]+x[3])/x[4] + x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2) ))
 }
 
 mcmc_RW <- function(d, ntimes = 1000)
@@ -38,10 +38,10 @@ mcmc_RW <- function(d, ntimes = 1000)
   for(i in 2:ntimes)
   {
     for (j in 1:4){
-      y <- runif(1,x[i-1,j]-d[j],x[i-1,j]+d[j])
+      y <- max(0,runif(1,x[i-1,j]-d[j],x[i-1,j]+d[j]))
       temp <- x[i-1,]
       temp[j] <- y
-      alpha <- min(1,fullcond(temp,j)/fullcond(x[i-1,],j), na.rm=TRUE)
+      alpha <- min(1,exp(fullcond(temp,j)- fullcond(x[i-1,],j)), na.rm=TRUE)
       # cat("alpha:",alpha, "j:",j, "y:",y, "x:",x[i-1,], "\n")
       if (runif(1)<alpha){
         if (j==1){
@@ -77,14 +77,14 @@ mcmc_block <- function(d, ntimes)
   {
     t1 <- rnorm(1,mean=x[i-1,1],sd=.5)
     y0 <- sum(date<t1)
-    lam0 <- runif(1, x[i-1,2]-d[2], x[i-1,2]+d[2])
-    lam1 <- runif(1, x[i-1,3]-d[3], x[i-1,3]+d[3])
+    lam0 <- max(0,runif(1, x[i-1,2]-d[2], x[i-1,2]+d[2]))
+    lam1 <- max(0,runif(1, x[i-1,3]-d[3], x[i-1,3]+d[3]))
     temp <- x[i-1,]
     temp[1] <- t1
     temp[2] <- lam0
     temp[3] <- lam1
     temp[5] <- y0
-    alpha <- min(1,fullcond.b1(temp)/fullcond.b1(x[i-1,]), na.rm=TRUE)
+    alpha <- min(1,exp(fullcond.b1(temp)-fullcond.b1(x[i-1,])), na.rm=TRUE)
     # cat("alpha:",alpha, "x:",x[i-1,], "\n")
     if (runif(1)<alpha){
       x[i,] <- temp
@@ -96,12 +96,12 @@ mcmc_block <- function(d, ntimes)
     temp <- x[i,]
     beta <- max(0,rnorm(1,mean=temp[4], sd=.5))
     temp[4] <- beta
-    lam0 <- runif(1, x[i,2]-d[2], x[i,2]+d[2])
-    lam1 <- runif(1, x[i,3]-d[3], x[i,3]+d[3])
+    lam0 <- max(0,runif(1, x[i,2]-d[2], x[i,2]+d[2]))
+    lam1 <- max(0,runif(1, x[i,3]-d[3], x[i,3]+d[3]))
     temp[2] <- lam0
     temp[3] <- lam1
-    alpha <- min(1, fullcond.b1(temp)/fullcond.b1(x[i,]), na.rm=TRUE)
-    cat("alpha:",alpha, "x:",x[i-1,], "\n")
+    alpha <- min(1, exp(fullcond.b1(temp)-fullcond.b1(x[i,])), na.rm=TRUE)
+    # cat("alpha:",alpha, "x:",x[i-1,], "\n")
     if (runif(1)<alpha){
       x[i,] <- temp
     }
@@ -145,9 +145,9 @@ mcmc_block <- function(d, ntimes)
 # }
 
 
-d <- c(50,3,3,3)
+d <- c(5,.1,.1,.1)
 d.b <- c(1,.1,.1,.1)
-ntimes <- 10000
+ntimes <- 50000
 
 
 x.b <- mcmc_block(d.b,ntimes)
@@ -158,6 +158,13 @@ plot(x.b[,2], type='l')
 plot(x.b[,3], type='l')
 plot(x.b[,4], type='l')
 
+par(mfrow=c(2,2))
+truehist(x.b[-c(1:1000),1])
+truehist(x.b[-c(1:1000),2])
+truehist(x.b[-c(1:1000),3])
+truehist(x.b[-c(1:1000),4])
+
+
 # x1 = mcmc_RW(d, ntimes)
 # 
 # par(mfrow=c(2,2))
@@ -166,6 +173,12 @@ plot(x.b[,4], type='l')
 # plot(x1[,3], type='l')
 # plot(x1[,4], type='l')
 # 
+# par(mfrow=c(2,2))
+# truehist(x1[-c(1:1000),1])
+# truehist(x1[-c(1:1000),2])
+# truehist(x1[-c(1:1000),3])
+# truehist(x1[-c(1:1000),4])
+
 # par(mfrow=c(2,2))
 # acf(x1[,1])
 # acf(x1[,2])
