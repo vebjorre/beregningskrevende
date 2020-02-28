@@ -69,15 +69,83 @@ From this we can see that $t_1$ belongs to the exponential distribution with $\b
 ## 8) 
 
 # Problem B: INLA for Gaussian Data
+We start by plotting the dataset. 
+```{r}
+data=read.table("https://www.math.ntnu.no/emner/TMA4300/2020v/Exercise/exercise2/Gaussiandata.txt")
+names(data)="y"
+plot(data$y)
+```
 
-## 1) 
+## 1)
+A latent Gaussian model, LGM, consists of three elements: a likelihood model, a latent Gaussian field and a vector of hyperparameters. In our model the observations $y_t$ are assumed independent and Gaussian distributed with mean $\eta_t$ and known unit varuance. Hence, the likelihood model is given as $y_t|\eta_t=\mathcal{N}(\eta_t,1); t=1,...T$. The linear predictor $\eta_t$ is linked to a smooth effect of time $t$ as $\eta_t=f_t$. For the vector $\mathbf{f}=(f_1,\dots, f_T)$ we have the second order random walk as the prior distribution, such that
+$$
+\pi(\mathbf{f}|\theta) \propto \theta^{(T-2)/2}exp\left\{\frac{\theta}{2}\sum_{t=3}^T[f_t-2f_{t-1}+f_{t-2}]^2 \right\} = \mathcal{N}(\mathbf{0},\mathbf{Q}(\theta)^{-1}).
+$$
+Hence, the latent field $\mathbf{f}$ is a Gaussian Markov random field, GMRF, with sparce precision matrix $\mathbf{Q}(\theta)^{-1}$. The precision parameter $\theta$ controls the smoothness of the vector $\mathbf{f}$ and is our hyperparameter, $\theta \sim \textrm{gamma}(1,1)$.
+
+It is possible to use INLA to estimate the parameters because our inferential interest lies in the posterior marginal for the smooth effect $\pi(\eta_t|\mathbf{y})$,$t=1,\dots,T$, and the LGM fulfill the following assumtions. Each data point $y_t$ depends only on one of the elements in the latent Gausian field $\mathbf{f}$, the linear predictor $\eta_t$. The hyperparameter vector should be small, and in our case it contains only one parameter $\theta$. The precion matrix $\mathbf{Q}(\theta)^{-1}$ is sparse, and the linear predictor depends linearly on the unkown smooth function of temporal effects.  
 
 ## 2) 
+```{r}
+library(MASS)
+nsamples=100
+y=data$y
+
+beta <- function(eta,nsamples){ 
+  sum <- 0
+  for (t in 3:nsamples){
+    sum <- sum + (eta[t]-2*eta[t-1]+eta[t-2])^2
+  }
+  return (1+0.5*sum)
+}
+
+block_Gibbs <- function(y, theta, eta, alpha = 0.001, beta = 0.001, nsamples = 5000) 
+{
+  theta <- rep(0,nsamples)
+  eta <- rep(0,nsamples)
+  
+  theta[1] <- rgamma(1,1,1)  #initial values
+  eta[1] <- rep(mean(y)) #initial values
+  count <- 0
+  for (i in 1:nsamples) { 
+    ## update theta
+    scale=beta(eta,nsamples)
+    new_theta <- rgamma(1,shape=nsamples/2,scale=scale)
+    ## update the vector eta with the new theta
+    new_eta <- 
+    
+    theta[i] = new_theta
+    eta[i]=new_eta
+      
+  }
+  return(data.frame(theta=theta, eta=eta))
+}
+eta
+```
 
 ## 3) 
 
+
 ## 4) 
 
-## 5) 
 
+## 5) 
+```{r}
+#install.packages("INLA", repos=c(getOption("repos"),
+#INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
+library("INLA")
+x=1:20
+df=data.frame(y=data$y,x=x)
+
+# specify the prior
+my.hyper <- list(theta = list(prior="gamma", param=c(1,1)))
+# specify the linear predictor
+formula <- y ~ -1 + f(x, model = "rw2", hyper = my.hyper)
+#Fit the model
+result <- inla(formula=formula, data=df, family="gaussian",control.family = list(hyper = my.hyper))
+
+plot(result$marginals.hyperpar$`Precision for x`, type="l")
+summary(result)
+
+```
 
