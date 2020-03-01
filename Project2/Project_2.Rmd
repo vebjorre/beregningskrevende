@@ -120,7 +120,6 @@ block_Gibbs <- function(y, theta, eta, alpha = 0.001, beta = 0.001, nsamples = 5
   }
   return(data.frame(theta=theta, eta=eta))
 }
-eta
 ```
 
 ## 3) 
@@ -134,18 +133,18 @@ eta
 #install.packages("INLA", repos=c(getOption("repos"),
 #INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 library("INLA")
-x=1:20
+x=(1:20)
 df=data.frame(y=data$y,x=x)
 
 # specify the prior
-my.hyper <- list(theta = list(prior="gamma", param=c(1,1)))
+my.hyper <- list(theta = list(prior="log.gamma", param=c(1,1)))
 # specify the linear predictor
 formula <- y ~ -1 + f(x, model = "rw2", hyper = my.hyper)
 #Fit the model
-result <- inla(formula=formula, data=df, family="gaussian",control.family = list(hyper = my.hyper))
+result <- inla(formula=formula, family="gaussian", data=df,verbose = FALSE) 
+#,control.family = list(hyper = my.hyper),control.compute = list(config=TRUE)
 
-plot(result$marginals.hyperpar$`Precision for x`, type="l")
+plot(result$summary.random$x$mean)
 summary(result)
-
 ```
 
