@@ -219,24 +219,18 @@ It is possible to use INLA to estimate the parameters because our inferential in
 ```{r}
 library(MASS)
 library(Matrix)
-library(mvtnorm)
-
-nsamples=100
-y=data$y
-
-beta <- function(eta,nsamples,T){ 
-  sum <- 0
-  for (t in 3:T){
-    sum <- sum + (eta[t]-2*eta[t-1]+eta[t-2])^2
-  }
-  return (1+0.5*sum)
-}
+library(dae)
+library(matrixStats)
 
 Q_matrix <- function(T){
   Q <- diag(1,T,T)
   Q[row(Q) - col(Q) == 1] <- -2
   Q[row(Q) - col(Q) == 2] <- 1
-  return(Q%*%t(Q))
+  QQ=Q%*%t(Q)
+  QQ[T,T]=1
+  QQ[T-1,T-1]=5
+  QQ[T-1,T]=QQ[T,T-1]=-2
+  return(QQ)
 }
 
 block_Gibbs <- function(y, nsamples) 
@@ -247,7 +241,7 @@ block_Gibbs <- function(y, nsamples)
   eta <- matrix(0,nsamples,T)
   
   theta[1] <- rgamma(1,1,1)  #initial values
-  eta[1,] <- y#rep(mean(y),T) #initial values
+  eta[1,] <- y #initial values
   count <- 0
   for (i in 2:nsamples) { 
     ## update theta
@@ -264,9 +258,23 @@ block_Gibbs <- function(y, nsamples)
   return(list)
 }
 n=10000
-list=block_Gibbs(y,n)
+y=data$y
 
-plot(list[n,-1])
+list=block_Gibbs(y,n)
+t=seq(1,20,1)
+
+m <- colMeans(list[-c(1:1000),])
+v <- colSds(list[-c(1:1000),])
+m_upper <- m+qnorm(0.05)*v
+m_lower <- m-qnorm(0.05)*v
+
+plot(t,y)
+lines(t,m[-1])
+lines(t,m_upper[-1])
+lines(t,m_lower[-1])
+
+truehist(list[,1])
+
 
 ```
 
@@ -299,6 +307,7 @@ result <- inla(formula=formula, family="gaussian", data=df,verbose = FALSE)
 #,control.family = list(hyper = my.hyper),control.compute = list(config=TRUE)
 
 plot(result$summary.random$x$mean)
+plot(result$marginals.hyperpar$`Precision for the Gaussian observations`,xlim=c(0,6))
 summary(result)
 ```
 
