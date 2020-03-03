@@ -59,14 +59,144 @@ $$
 From this we can see that $t_1$ belongs to the exponential distribution with $\beta=(\lambda_0-\lambda_1)^{-1}$ and that $\lambda_i$ belongs to the gamma distribution with the shape parameter $\alpha=2+y_i$ and scale parameter $\beta=(1/\beta+t_{i+1}-t_i)^{-1}$ for $i=1,2$.
 
 ## 4) 
+```{r}
+library(boot)
+library(MASS)
+date <- coal$date
+t0 <- date[1]
+t2 <- date[191]
+date <- date[-c(1,191)]
+
+target <- function(x){
+  return (1/x[4]^5 * exp(-(1+x[2]+x[3])/x[4]) * x[2]^(x[5]+1) * x[3]^(189-x[5]+1) * exp(x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2))
+}
+
+fullcond <- function(x,r){
+  if (r==1){
+    return (dexp(x[1], rate=1/(x[1]-x[2])))
+  }
+  else if (r==2){
+    return (dgamma(x[2], shape=x[5]+2, scale=1/(1/x[4]+x[1]-t0)))
+  }
+  else if (r==3){
+    return (dgamma(x[3], shape=189-x[5]+2, scale=1/(1/x[4]+t2-x[1])))
+  }
+  else if (r==4){
+    return (1/x[4]^5 * exp(-1/x[4]*(1+x[2]+x[3])))
+  }
+}
+
+fullcond.b1 <- function(x){
+  return( x[2]^(x[5]+1) * x[3]^(189-x[5]+1) * exp(-(1+x[2]+x[3])/x[4] + x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2) )
+}
+
+mcmc_RW <- function(d, ntimes = 1000)
+{
+  x <- matrix(nrow=ntimes, ncol=5)
+  x[1,1] <- runif(1,t0,t2)
+  x[1,2:4] <- runif(3,0,1)
+  x[1,5] <- sum(date<x[1,1])
+  for(i in 2:ntimes)
+  {
+    for (j in 1:4){
+      y <- runif(1,x[i-1,j]-d[j],x[i-1,j]+d[j])
+      temp <- x[i-1,]
+      temp[j] <- y
+      alpha <- min(1,fullcond(temp,j)/fullcond(x[i-1,],j), na.rm=TRUE)
+      # cat("alpha:",alpha, "j:",j, "y:",y, "x:",x[i-1,], "\n")
+      if (runif(1)<alpha){
+        if (j==1){
+          if (t0 <= y && y <= t2){
+            x[i,j] = y
+          }
+          else{
+            x[i,j] = x[i-1,j]
+          }
+        }
+        else{
+          x[i,j] <- y
+        }
+        
+      }
+      else{
+        x[i,j] <- x[i-1,j]
+      }
+    }
+    x[i,5] <- sum(date<=x[i,1])
+  }
+  return(x)
+}
+```
 
 ## 5) 
+```{r}
+
+```
 
 ## 6) 
+```{r}
 
+```
 ## 7) 
+```{r}
+mcmc_block <- function(d, ntimes)
+{
+  x <- matrix(nrow=ntimes, ncol=5)
+  x[1,1] <- runif(1,t0,t2)
+  x[1,2:4] <- runif(3,0,1)
+  x[1,5] <- sum(date<x[1,1])
+  for(i in 2:ntimes)
+  {
+    t1 <- rnorm(1,mean=x[i-1,1],sd=.5)
+    y0 <- sum(date<t1)
+    lam0 <- runif(1, x[i-1,2]-d[2], x[i-1,2]+d[2])
+    lam1 <- runif(1, x[i-1,3]-d[3], x[i-1,3]+d[3])
+    temp <- x[i-1,]
+    temp[1] <- t1
+    temp[2] <- lam0
+    temp[3] <- lam1
+    temp[5] <- y0
+    alpha <- min(1,fullcond.b1(temp)/fullcond.b1(x[i-1,]), na.rm=TRUE)
+    # cat("alpha:",alpha, "x:",x[i-1,], "\n")
+    if (runif(1)<alpha){
+      x[i,] <- temp
+    }
+    else{
+      x[i,] <- x[i-1,]
+    }
+    
+    temp <- x[i,]
+    beta <- max(0,rnorm(1,mean=temp[4], sd=.5))
+    temp[4] <- beta
+    lam0 <- runif(1, x[i,2]-d[2], x[i,2]+d[2])
+    lam1 <- runif(1, x[i,3]-d[3], x[i,3]+d[3])
+    temp[2] <- lam0
+    temp[3] <- lam1
+    alpha <- min(1, fullcond.b1(temp)/fullcond.b1(x[i,]), na.rm=TRUE)
+    cat("alpha:",alpha, "x:",x[i-1,], "\n")
+    if (runif(1)<alpha){
+      x[i,] <- temp
+    }
+  }
+  return(x)
+}
+```
 
 ## 8) 
+```{r}
+d <- c(50,3,3,3)
+d.b <- c(1,.1,.1,.1)
+ntimes <- 10000
+
+
+x.b <- mcmc_block(d.b,ntimes)
+
+par(mfrow=c(2,2))
+plot(x.b[,1], type='l')
+plot(x.b[,2], type='l')
+plot(x.b[,3], type='l')
+plot(x.b[,4], type='l')
+```
 
 # Problem B: INLA for Gaussian Data
 We start by plotting the dataset. 
@@ -88,45 +218,79 @@ It is possible to use INLA to estimate the parameters because our inferential in
 ## 2) 
 ```{r}
 library(MASS)
-nsamples=100
-y=data$y
+library(Matrix)
+library(dae)
+library(matrixStats)
 
-beta <- function(eta,nsamples){ 
-  sum <- 0
-  for (t in 3:nsamples){
-    sum <- sum + (eta[t]-2*eta[t-1]+eta[t-2])^2
-  }
-  return (1+0.5*sum)
+Q_matrix <- function(T){
+  Q <- diag(1,T,T)
+  Q[row(Q) - col(Q) == 1] <- -2
+  Q[row(Q) - col(Q) == 2] <- 1
+  QQ=Q%*%t(Q)
+  QQ[T,T]=1
+  QQ[T-1,T-1]=5
+  QQ[T-1,T]=QQ[T,T-1]=-2
+  return(QQ)
 }
 
-block_Gibbs <- function(y, theta, eta, alpha = 0.001, beta = 0.001, nsamples = 5000) 
+block_Gibbs <- function(y, nsamples) 
 {
+  T=length(y)
+  Q <- Q_matrix(T)
   theta <- rep(0,nsamples)
-  eta <- rep(0,nsamples)
+  eta <- matrix(0,nsamples,T)
   
   theta[1] <- rgamma(1,1,1)  #initial values
-  eta[1] <- rep(mean(y)) #initial values
+  eta[1,] <- y #initial values
   count <- 0
-  for (i in 1:nsamples) { 
+  for (i in 2:nsamples) { 
     ## update theta
-    scale=beta(eta,nsamples)
-    new_theta <- rgamma(1,shape=nsamples/2,scale=scale)
+    rate=1+0.5*t(eta[i-1,])%*%Q%*%eta[i-1,]
+    theta[i] <- rgamma(1,shape=T/2,rate=rate)
     ## update the vector eta with the new theta
-    new_eta <- 
-    
-    theta[i] = new_theta
-    eta[i]=new_eta
+    I=diag(1,T)
+    var=solve(Q*theta[i]+I,sparse=TRUE)
+    mean=var%*%y
+    eta[i,] <- rmvnorm(mean, var)
       
   }
-  return(data.frame(theta=theta, eta=eta))
+  list=cbind(theta=theta, eta=eta) 
+  return(list)
 }
+<<<<<<< HEAD
+=======
+n=10000
+y=data$y
+
+list=block_Gibbs(y,n)
+t=seq(1,20,1)
+
+m <- colMeans(list[-c(1:1000),])
+v <- colSds(list[-c(1:1000),])
+m_upper <- m+qnorm(0.05)*v
+m_lower <- m-qnorm(0.05)*v
+
+plot(t,y)
+lines(t,m[-1])
+lines(t,m_upper[-1])
+lines(t,m_lower[-1])
+
+truehist(list[,1])
+
+>>>>>>> 2de60b442c66c21aec2ef67306f2b533680357f7
 
 ```
 
 ## 3) 
+```{r}
+theta <- seq(0,1.5,0.1)
 
+```
 
 ## 4) 
+```{r}
+
+```
 
 
 ## 5) 
@@ -134,18 +298,27 @@ block_Gibbs <- function(y, theta, eta, alpha = 0.001, beta = 0.001, nsamples = 5
 #install.packages("INLA", repos=c(getOption("repos"),
 #INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 library("INLA")
-x=1:20
+x=(1:20)
 df=data.frame(y=data$y,x=x)
 
 # specify the prior
-my.hyper <- list(theta = list(prior="gamma", param=c(1,1)))
+my.hyper <- list(theta = list(prior="log.gamma", param=c(1,1)))
 # specify the linear predictor
 formula <- y ~ -1 + f(x, model = "rw2", hyper = my.hyper)
 #Fit the model
+<<<<<<< HEAD
 # result <- inla(formula=formula, data=df, family="gaussian",control.family = list(hyper = my.hyper))
 # 
 # plot(result$marginals.hyperpar$`Precision for x`, type="l")
 # summary(result)
 
+=======
+result <- inla(formula=formula, family="gaussian", data=df,verbose = FALSE) 
+#,control.family = list(hyper = my.hyper),control.compute = list(config=TRUE)
+
+plot(result$summary.random$x$mean)
+plot(result$marginals.hyperpar$`Precision for the Gaussian observations`,xlim=c(0,6))
+summary(result)
+>>>>>>> 2de60b442c66c21aec2ef67306f2b533680357f7
 ```
 
