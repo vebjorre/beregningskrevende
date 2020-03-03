@@ -120,7 +120,7 @@ block_Gibbs <- function(y, theta, eta, alpha = 0.001, beta = 0.001, nsamples = 5
   }
   return(data.frame(theta=theta, eta=eta))
 }
-eta
+
 ```
 
 ## 3) 
@@ -142,10 +142,10 @@ my.hyper <- list(theta = list(prior="gamma", param=c(1,1)))
 # specify the linear predictor
 formula <- y ~ -1 + f(x, model = "rw2", hyper = my.hyper)
 #Fit the model
-result <- inla(formula=formula, data=df, family="gaussian",control.family = list(hyper = my.hyper))
-
-plot(result$marginals.hyperpar$`Precision for x`, type="l")
-summary(result)
+# result <- inla(formula=formula, data=df, family="gaussian",control.family = list(hyper = my.hyper))
+# 
+# plot(result$marginals.hyperpar$`Precision for x`, type="l")
+# summary(result)
 
 ```
 

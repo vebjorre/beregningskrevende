@@ -77,14 +77,14 @@ mcmc_block <- function(d, ntimes)
   {
     t1 <- rnorm(1,mean=x[i-1,1],sd=.5)
     y0 <- sum(date<t1)
-    lam0 <- max(0,runif(1, x[i-1,2]-d[2], x[i-1,2]+d[2]))
-    lam1 <- max(0,runif(1, x[i-1,3]-d[3], x[i-1,3]+d[3]))
+    lam0 <- max(0,runif(1, x[i-1,2]-d[2], x[i-1,2]+d[2])) #From full conditional?
+    lam1 <- max(0,runif(1, x[i-1,3]-d[3], x[i-1,3]+d[3])) #From full conditional?
     temp <- x[i-1,]
     temp[1] <- t1
     temp[2] <- lam0
     temp[3] <- lam1
     temp[5] <- y0
-    alpha <- min(1,exp(fullcond.b1(temp)-fullcond.b1(x[i-1,])), na.rm=TRUE)
+    alpha <- min(1,exp(fullcond.b1(temp)-fullcond.b1(x[i-1,])), na.rm=TRUE) #No alpha?
     # cat("alpha:",alpha, "x:",x[i-1,], "\n")
     if (runif(1)<alpha){
       x[i,] <- temp
@@ -96,11 +96,11 @@ mcmc_block <- function(d, ntimes)
     temp <- x[i,]
     beta <- max(0,rnorm(1,mean=temp[4], sd=.5))
     temp[4] <- beta
-    lam0 <- max(0,runif(1, x[i,2]-d[2], x[i,2]+d[2]))
-    lam1 <- max(0,runif(1, x[i,3]-d[3], x[i,3]+d[3]))
+    lam0 <- max(0,runif(1, x[i,2]-d[2], x[i,2]+d[2])) #From full conditional?
+    lam1 <- max(0,runif(1, x[i,3]-d[3], x[i,3]+d[3])) #From full conditional?
     temp[2] <- lam0
     temp[3] <- lam1
-    alpha <- min(1, exp(fullcond.b1(temp)-fullcond.b1(x[i,])), na.rm=TRUE)
+    alpha <- min(1, exp(fullcond.b1(temp)-fullcond.b1(x[i,])), na.rm=TRUE) #No alpha?
     # cat("alpha:",alpha, "x:",x[i-1,], "\n")
     if (runif(1)<alpha){
       x[i,] <- temp
