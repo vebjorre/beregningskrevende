@@ -253,13 +253,10 @@ library(dae)
 library(matrixStats)
 
 Q_matrix <- function(T){
-  Q <- diag(1,T,T)
+  Q <- diag(1,T,T-2)
   Q[row(Q) - col(Q) == 1] <- -2
   Q[row(Q) - col(Q) == 2] <- 1
   QQ=Q%*%t(Q)
-  QQ[T,T]=1
-  QQ[T-1,T-1]=5
-  QQ[T-1,T]=QQ[T,T-1]=-2
   return(QQ)
 }
 
@@ -296,8 +293,8 @@ t=seq(1,20,1)
 
 m <- colMeans(list[-c(1:1000),])
 v <- colSds(list[-c(1:1000),])
-m_upper <- m+qnorm(0.05)*v
-m_lower <- m-qnorm(0.05)*v
+m_upper <- m+qnorm(0.025)*v
+m_lower <- m-qnorm(0.025)*v
 
 plot(t,y)
 lines(t,m[-1])
@@ -305,18 +302,58 @@ lines(t,m_upper[-1])
 lines(t,m_lower[-1])
 
 truehist(list[,1])
+truehist(list[-c(1:1000),])
 
 ```
 
 ## 3) 
 ```{r}
-theta <- seq(0,1.5,0.1)
+pi_theta <- function(theta){
+  Q<-Q_matrix(T)
+  I=diag(1,T)
+  det <- rep(0,length(theta))
+  pi <- rep(0,length(theta))
+  for (i in 1:length(theta)){
+    det<-det(Q*theta[i]+I)
+    pi[i] <- theta[i]^(T/2-1)*exp(-theta[i])*exp(-0.5*t(y)%*%(I-solve(Q*theta[i]+I))%*%y)/det^0.5
+  }
+  return (pi)
+} 
+
+T=20
+mode = optimise(pi_theta,lower = 0, upper = 6, maximum = T)$maximum
+delta_k=0.1
+theta <- seq(0,6,delta_k)
+pi_theta_k <- pi_theta(theta)
+const = integrate(pi_theta, lower = 0, upper = 10)$value
+s <- smooth.spline(theta,pi_theta_k/const)
+plot(theta,pi_theta(theta)/const)
+lines(s)
 
 ```
 
 ## 4) 
 ```{r}
+eta <- seq(-1,1,0.01)
+pi_eta_y_theta <- function(theta,eta,i=10){
+  QI <- Q_matrix(T)*theta+diag(1,T)
+  QI_i <- QI[i,i]
+  y_i <- y[i]
+  mean <- y_i/QI_i
+  var <- 1/QI_i
+  pi <- dnorm(eta,mean, var)
+  return(pi)
+}
 
+pi_eta_y <- function(theta){
+  sum=rep(0,length(eta))
+  for (i in 1:length(theta))
+    sum = sum + pi_eta_y_theta(theta[i],eta)*pi_theta_k[i]*delta_k
+  return (sum)
+}
+
+eta_10 <- pi_eta_y(theta)
+plot(eta,eta_10,type="l")
 ```
 
 
@@ -331,14 +368,13 @@ df=data.frame(y=data$y,x=x)
 # specify the prior
 my.hyper <- list(theta = list(prior="log.gamma", param=c(1,1)))
 # specify the linear predictor
-formula <- y ~ -1 + f(x, model = "rw2", hyper = my.hyper)
+formula <- y ~ -1 + f(x, model = "rw2", hyper = my.hyper, constr=FALSE)
 #Fit the model
-
-result <- inla(formula=formula, family="gaussian", data=df,verbose = FALSE) 
-#,control.family = list(hyper = my.hyper),control.compute = list(config=TRUE)
+result <- inla(formula=formula, family="gaussian", data=df,verbose = FALSE, control.family = list(hyper = list(prec=list(initial=0,fixed=TRUE)))) 
+#,control.compute = list(config=TRUE)
 
 plot(result$summary.random$x$mean)
-plot(result$marginals.hyperpar$`Precision for the Gaussian observations`,xlim=c(0,6))
+plot(result$marginals.hyperpar$`Precision for x`,xlim=c(0,6))
 summary(result)
 ```
 
