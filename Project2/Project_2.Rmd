@@ -66,7 +66,7 @@ We now implement a single site MCMC algorithm for $f(\theta|x)$. Since the full 
 $$
 \min\{1,\frac{f(\tilde t_1|\lambda_0,\lambda_1,\beta,x)}{f(t_1|\lambda_0,\lambda_1,\beta,x)}\} = \min\{1, \frac{\lambda_0^{1+\tilde y_0}\lambda_1^{1+\tilde y_1}}{\lambda_0^{1+y_0}\lambda_1^{1+y_1}}\exp((\tilde t_1-t_1)(\lambda_0-\lambda_1)) \}.
 $$
-where all parameters parameters not marked with "~" are taken from $\theta^{(i-1)}$ and $\tilde y_0$ and $\tilde y_1$ are the updated values given $\tilde t_1$. We also need to keep sure $t_0<t_1<t_2$. We enforce this by setting $\alpha=0$ when the proposed value $\tilde t_1$ does not satisfy this constraint. As initial values we draw $t_1^{(0)}$ from $unif(t_0,t_2)$ and the rest from $unif(0,1)$.
+where all parameters parameters not marked with "~" are taken from $\theta^{(i-1)}$ and $\tilde y_0$ and $\tilde y_1$ are the updated values given $\tilde t_1$. We also need to keep sure $t_0<t_1<t_2$. We enforce this by setting $\alpha=0$ when the proposed value $\tilde t_1$ does not satisfy this constraint. As initial values we use $t_1=(t_0+t_2)/2$ and draw the rest from $unif(0,1)$. 
 
 ```{r}
 library(MASS)
@@ -91,9 +91,10 @@ fullcond <- function(x,r){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
   }
 }
 
-mcmc_RW <- function(sd, ntimes = 1000){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
+mcmc_RW <- function(sd, ntimes){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
   x <- matrix(nrow=ntimes, ncol=5)
-  x[1,1] <- runif(1,t0,t2)
+  # x[1,1] <- runif(1,t0,t2)
+  x[1,1] <- (t2+t0)/2
   x[1,2:4] <- runif(3,0,1)
   x[1,5] <- sum(date<x[1,1])
   for(i in 2:ntimes){
@@ -104,7 +105,7 @@ mcmc_RW <- function(sd, ntimes = 1000){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
     t1 <- rnorm(1, temp[1], sd)
     temp[1] <- t1
     temp[5] <- sum(date<t1)
-    alpha <- min(1,exp(fullcond(temp,1)-fullcond(x[i-1],1)), na.rm=TRUE)
+    alpha <- min(1,exp(fullcond(temp,1)-fullcond(x[i-1,],1)), na.rm=TRUE)
     if (runif(1)<alpha && t0<t1 && t1<t2){
       x[i,1] <- t1
       x[i,5] <- sum(date<=t1)
@@ -112,44 +113,71 @@ mcmc_RW <- function(sd, ntimes = 1000){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
     else{
       x[i,1] <- x[i-1,1]
       x[i,5] <- x[i-1,5]
-      }
+    }
   }
   return(x)
 }
 ```
 
 ## 5)
+We set the tuning parameter $\sigma$ to 1, such that the proposal distribution for $t_1$ is the standard normal, and do 5000 steps of our algorithm.
 ```{r}
 sd <- 1
-ntimes <- 100000
-
+ntimes <- 5000
 x1 = mcmc_RW(sd, ntimes)
 
 par(mfrow=c(2,2))
-plot(x1[,1], type='l', xlab="Iteration", ylab="t1")
-plot(x1[,2], type='l', xlab="Iteration", ylab="lambda0")
-plot(x1[,3], type='l', xlab="Iteration", ylab="lambda1")
-plot(x1[,4], type='l', xlab="Iteration", ylab="beta")
+plot(x1[,1], type='l', xlab="i", ylab="t1")
+plot(x1[,2], type='l', xlab="i", ylab="lambda0")
+plot(x1[,3], type='l', xlab="i", ylab="lambda1")
+plot(x1[,4], type='l', xlab="i", ylab="beta")
 
+```
+
+
+
+
+
+The trace plots above show the development of each parameter. The plots for $\lambda_i$ look exactly as we want, with a short burn-in period and with the looks of a wide band. For $\beta$ there is no visible burn-in, but there are some really large values, but this is expected with the rather large shape parameter in the inverse gamma distribution. Because these parameters are drawn directly from their full conditionals they also update in every iteration. This make them mix well the whole way. The proposed value for $t_1$ is not accepted at every step, such that this chain is much slower at exploring the whole domain. This means it may be smart to run the chain longer or change the tuning parameter $sigma$. Omitting the 1000 first steps seem to be a safe choice for the burn-in period for each of the four parameters.
+
+To further evaluate the mixing properties we look at the autocorrelation function for each parameter.
+```{r}
+#Remove burn-in
 burnin <- c(1:1000)
 
+#Autocorrelations
 par(mfrow=c(2,2))
-truehist(x1[burnin,1], xlab="t1")
-truehist(x1[burnin,2], xlab="lambda0")
-truehist(x1[burnin,3], xlab="lambda1")
-truehist(x1[burnin,4], xlim=c(0,10), xlab="beta")
+acf(x1[-burnin,1], main="t1")
+acf(x1[-burnin,2], main="lambda0")
+acf(x1[-burnin,3], main="lambda1")
+acf(x1[-burnin,4], main="beta")
+```
+We immediately see that $\lambda_0$, $\lambda_1$ and $\beta$ have close to correlation between each step and thus have very good mixing properties. This is probably a result of the new values being accepted at each step and that the new proposals are not very connected to the previous step. The autocorrelation for $t_1$ is not too bad, but we see that there is some correlation over a relatively large number of steps. This could be improved by increasing the standard devation in the proposal of $t1$.
+
+
+```{r}
+sd <- 1
+ntimes <- 10000
+x2 = mcmc_RW(sd, ntimes)
 
 par(mfrow=c(2,2))
-acf(x1[burnin,1])
-acf(x1[burnin,2])
-acf(x1[burnin,3])
-acf(x1[burnin,4])
+truehist(x2[-burnin,1], xlab="t1")
+truehist(x2[-burnin,2], xlab="lambda0")
+truehist(x2[-burnin,3], xlab="lambda1")
+truehist(x2[-burnin,4], xlim=c(0,10), xlab="beta")
 
-mean(x1[-burnin,1])
-mean(x1[-burnin,2])
-mean(x1[-burnin,3])
-mean(x1[-burnin,4])
 
+
+t1hat <- mean(x2[-burnin,1])
+l0hat <- mean(x2[-burnin,2])
+l1hat <- mean(x2[-burnin,3])
+betahat <- mean(x2[-burnin,4])
+c(t1hat, l0hat, l1hat, betahat)
+
+par(mfrow=c(1,1))
+plot(date, 1:189, xlab="Year", ylab="Cumulative number of disasters", sub="Cumulative number of coal-mining disasters in UK from 1851 to 1962")
+lines(x=c(t0,t1hat), y=c(0,(t1hat-t0)*l0hat), col="red", lw=2)
+lines(x=c(t1hat,t2), y=c((t1hat-t0)*l0hat, (t1hat-t0)*l0hat+(t2-t1hat)*l1hat), col="red", lw=2)
 ```
 
 ## 6) 
@@ -158,13 +186,13 @@ mean(x1[-burnin,4])
 ```
 ## 7) 
 Instead of single site updates we now do two block proposals. In the first block we keep $\beta$ unchanged and start by generating $\tilde t_1$ from a normal distribution with the current value of $t_1$ as mean and standard deviation $\sigma_1$. We then generate $\lambda_0$ and $\lambda_1$ from their joint full conditional given $\tilde t_1$, i.e. $f(\lambda_0, \lambda_1 | x, \tilde t_1, \beta)$. We observe that this joint density is the product of their marginal full conditionals and thus they are independent and can be generated from their marginals, given $\tilde t_1$. This block update is accepted with the usual Metropolis-Hastings acceptance probability, but with three new values instead of one.
-The second block is identical to the first only switching the roles of $t_1$ and $\beta$ and using $\sigma_2$ as standard deviation in the proposal for $\beta$.
+The second block is identical to the first only switching the roles of $t_1$ and $\beta$ and using $\sigma_2$ as standard deviation in the proposal for $\beta$. We use the same initial values as before.
 
 ```{r}
 mcmc_block <- function(sd, ntimes)
 {
   x <- matrix(nrow=ntimes, ncol=5)
-  x[1,1] <- runif(1,t0,t2)
+  x[1,1] <- (t0+t2)/2
   x[1,2:4] <- runif(3,0,1)
   x[1,5] <- sum(date<x[1,1])
   for(i in 2:ntimes)
@@ -212,24 +240,24 @@ mcmc_block <- function(sd, ntimes)
 ## 8)
 In this block Metropolis-Hastings algorithm we have two tuning parameters, $\sigma=(\sigma_1,\sigma_2)$. ...
 ```{r}
-sd.b <- c(1,2)
-ntimes <- 50000
+sd.b <- c(2,2)
+ntimes <- 10000
 
 x.b <- mcmc_block(sd.b,ntimes)
 
 par(mfrow=c(2,2))
-plot(x.b[,1], type='l')
-plot(x.b[,2], type='l')
-plot(x.b[,3], type='l')
-plot(x.b[,4], type='l')
+plot(x.b[,1], type='l', xlab="i", ylab="t1")
+plot(x.b[,2], type='l', xlab="i", ylab="lambda0")
+plot(x.b[,3], type='l', xlab="i", ylab="lambda1")
+plot(x.b[,4], type='l', xlab="i", ylab="beta")
 
 burnin <- c(1:1000)
 
 par(mfrow=c(2,2))
-truehist(x.b[-burnin,1])
-truehist(x.b[-burnin,2])
-truehist(x.b[-burnin,3])
-truehist(x.b[-burnin,4], xlim=c(0,10))
+truehist(x.b[-burnin,1], xlab="t1")
+truehist(x.b[-burnin,2], xlab="lambda0")
+truehist(x.b[-burnin,3], xlab="lambda1")
+truehist(x.b[-burnin,4], xlim=c(0,10), xlab="beta")
 
 par(mfrow=c(2,2))
 acf(x.b[-burnin,1])

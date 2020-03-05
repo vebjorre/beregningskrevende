@@ -27,7 +27,7 @@ fullcond <- function(x,r){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
 
 mcmc_RW <- function(d, ntimes = 1000){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
   x <- matrix(nrow=ntimes, ncol=5)
-  x[1,1] <- runif(1,t0,t2)
+  x[1,1] <- 1900
   x[1,2:4] <- runif(3,0,1)
   x[1,5] <- sum(date<x[1,1])
   for(i in 2:ntimes){
@@ -101,7 +101,7 @@ mcmc_block <- function(d, ntimes)
   return(x)
 }
 
-d <- 1
+d <- 4
 d.b <- .5
 ntimes <- 50000
 
