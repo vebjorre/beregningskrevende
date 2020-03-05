@@ -7,16 +7,12 @@ t2 <- date[191] #End date
 date <- date[-c(1,191)] #Data
 plot(date, 1:189)
 
-target <- function(x){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
-  return (1/x[4]^5 * exp(-(1+x[2]+x[3])/x[4]) * x[2]^(x[5]+1) * x[3]^(189-x[5]+1) * exp(x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2))
+logtarget <- function(x){ # x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
+  return (-5*log(x[4]) + (x[5]+1)*log(x[2]) + (189-x[5]+1)*log(x[3]) - (1+x[2]+x[3])/x[4] + x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2 )
 }
 
 fullcond <- function(x,r){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
-  if (r==1){ #logscale
-    return (x[1]*(x[3]-x[2]))
-    # return (dexp(x[1], rate=1/(x[1]-x[2]), log=TRUE))
-  }
-  else if (r==2){
+  if (r==2){
     return (rgamma(1, shape=x[5]+2, rate=1/x[4]+x[1]-t0))
   }
   else if (r==3){
@@ -24,18 +20,14 @@ fullcond <- function(x,r){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
   }
   else if (r==4){
     return (rinvgamma(1, shape=4, rate=1+x[2]+x[3]))
-    # return (-5*log(x[4]) -1/x[4]*(1+x[2]+x[3]))
   }
 }
 
-logtarget <- function(x){ # x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
-  return (-5*log(x[4]) + (x[5]+1)*log(x[2]) + (189-x[5]+1)*log(x[3]) - (1+x[2]+x[3])/x[4] + x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2 )
-}
+
 
 mcmc_RW <- function(d, ntimes = 1000){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
   x <- matrix(nrow=ntimes, ncol=5)
-  # x[1,1] <- runif(1,t0,t2)
-  x[1,1] <- 1895
+  x[1,1] <- runif(1,t0,t2)
   x[1,2:4] <- runif(3,0,1)
   x[1,5] <- sum(date<x[1,1])
   for(i in 2:ntimes){
@@ -63,12 +55,10 @@ mcmc_RW <- function(d, ntimes = 1000){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
   return(x)
 }
 
-
 mcmc_block <- function(d, ntimes)
 {
   x <- matrix(nrow=ntimes, ncol=5)
-  # x[1,1] <- runif(1,t0,t2)
-  x[1,1] <- 1895
+  x[1,1] <- runif(1,t0,t2)
   x[1,2:4] <- runif(3,0,1)
   x[1,5] <- sum(date<x[1,1])
   for(i in 2:ntimes)
@@ -81,8 +71,8 @@ mcmc_block <- function(d, ntimes)
     temp <- x[i-1,]
     temp[1] <- t1
     temp[5] <- y0
-    lam0 <- fullcond(temp,2) #From full conditional?
-    lam1 <- fullcond(temp,3) #From full conditional?
+    lam0 <- fullcond(temp,2)
+    lam1 <- fullcond(temp,3)
     temp[2] <- lam0
     temp[3] <- lam1
     alpha <- min(1,exp(logtarget(temp)-logtarget(x[i-1,])), na.rm=TRUE)
@@ -92,7 +82,6 @@ mcmc_block <- function(d, ntimes)
     else{
       x[i,] <- x[i-1,]
     }
-    # cat("alpha:",alpha, "x:",x[i-1,], "\n")
     
     temp <- x[i,]
     beta <- rnorm(1,mean=temp[4], sd=d)
@@ -108,7 +97,6 @@ mcmc_block <- function(d, ntimes)
     if (runif(1) < alpha){
       x[i,] <- temp
     }
-    # cat("alpha:",alpha, "x:",x[i-1,], "\n")
   }
   return(x)
 }
@@ -131,14 +119,14 @@ par(mfrow=c(2,2))
 truehist(x1[-c(1:1000),1])
 truehist(x1[-c(1:1000),2])
 truehist(x1[-c(1:1000),3])
-truehist(x1[-c(1:1000),4])
-#
-# par(mfrow=c(2,2))
-# acf(x1[,1])
-# acf(x1[,2])
-# acf(x1[,3])
-# acf(x1[,4])
-#
+truehist(x1[-c(1:1000),4], xlim=c(0,10))
+
+par(mfrow=c(2,2))
+acf(x1[,1])
+acf(x1[,2])
+acf(x1[,3])
+acf(x1[,4])
+
 mean(x1[-c(1:1000),1])
 mean(x1[-c(1:1000),2])
 mean(x1[-c(1:1000),3])
