@@ -274,7 +274,7 @@ cov(x.b[-burnin,2], x.b[-burnin,3])
 ```
 
 # Problem B: INLA for Gaussian Data
-We start by plotting the dataset. 
+In this problem we are going to use the simulated data in the Gaussiandata.txt file. We start by plotting the dataset. 
 ```{r}
 data=read.table("https://www.math.ntnu.no/emner/TMA4300/2020v/Exercise/exercise2/Gaussiandata.txt")
 names(data)="y"
@@ -291,13 +291,20 @@ Hence, the latent field $\mathbf{f}$ is a Gaussian Markov random field, GMRF, wi
 It is possible to use INLA to estimate the parameters because our inferential interest lies in the posterior marginal for the smooth effect $\pi(\eta_t|\mathbf{y})$,$t=1,\dots,T$, and the LGM fulfill the following assumtions. Each data point $y_t$ depends only on one of the elements in the latent Gausian field $\mathbf{f}$, the linear predictor $\eta_t$. The hyperparameter vector should be small, and in our case it contains only one parameter $\theta$. The precion matrix $\mathbf{Q}(\theta)^{-1}$ is sparse, and the linear predictor depends linearly on the unkown smooth function of temporal effects.  
 
 ## 2) 
+In this exercise we implement a block Gibbs sampling algorithm for $\pi(\eta,\theta|y)$, where we update the parameters $\theta$ and $\eta$ iteratively by sampling from the full conditional distributions $\pi(\theta|\eta,y)$ and $\pi(\eta|\theta,y)$. 
+
+
+$$
+\pi(\eta,\theta|y)=\frac{\pi(\theta,\eta,y)}{\pi(y)} \propto \pi(y|\eta)\pi(\eta|\theta)\pi(\theta) \propto \theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\left(\eta^T(Q+I)\eta + y^Ty \right) +y^T\eta  \right\}
+$$
+
 ```{r}
 library(MASS)
 library(Matrix)
 library(dae)
 library(matrixStats)
 
-Q_matrix <- function(T){
+A_matrix <- function(T){
   Q <- diag(1,T,T-2)
   Q[row(Q) - col(Q) == 1] <- -2
   Q[row(Q) - col(Q) == 2] <- 1
@@ -305,23 +312,19 @@ Q_matrix <- function(T){
   return(QQ)
 }
 
-block_Gibbs <- function(y, nsamples) 
-{
-  T=length(y)
-  Q <- Q_matrix(T)
+block_Gibbs <- function(y, nsamples) {
   theta <- rep(0,nsamples)
   eta <- matrix(0,nsamples,T)
-  
-  theta[1] <- rgamma(1,1,1)  #initial values
-  eta[1,] <- y #initial values
-  count <- 0
-  for (i in 2:nsamples) { 
+  #initial values
+  theta[1] <- rgamma(1,1,1)  
+  eta[1,] <- y 
+  for (i in 2:nsamples){ 
     ## update theta
-    rate=1+0.5*t(eta[i-1,])%*%Q%*%eta[i-1,]
+    rate=1+0.5*t(eta[i-1,])%*%A%*%eta[i-1,]
     theta[i] <- rgamma(1,shape=T/2,rate=rate)
     ## update the vector eta with the new theta
     I=diag(1,T)
-    var=solve(Q*theta[i]+I,sparse=TRUE)
+    var=solve(A*theta[i]+I,sparse=TRUE)
     mean=var%*%y
     eta[i,] <- rmvnorm(mean, var)
       
@@ -332,73 +335,76 @@ block_Gibbs <- function(y, nsamples)
 
 n=10000
 y=data$y
-
-list=block_Gibbs(y,n)
+T <- length(y)
+A <- A_matrix(T)
+f_gibbs=block_Gibbs(y,n)
 t=seq(1,20,1)
 
-m <- colMeans(list[-c(1:1000),])
-v <- colSds(list[-c(1:1000),])
+m <- colMeans(f_gibbs[-c(1:1000),])
+v <- colSds(f_gibbs[-c(1:1000),])
 m_upper <- m+qnorm(0.025)*v
 m_lower <- m-qnorm(0.025)*v
 
 plot(t,y)
 lines(t,m[-1])
-lines(t,m_upper[-1])
-lines(t,m_lower[-1])
+lines(t,m_upper[-1],col="red")
+lines(t,m_lower[-1],col="red")
 
-truehist(list[,1])
-truehist(list[-c(1:1000),])
+truehist(f_gibbs[,1])
+truehist(f_gibbs[-c(1:1000),11])
 
 ```
 
 ## 3) 
 ```{r}
 pi_theta <- function(theta){
-  Q<-Q_matrix(T)
+  A<-A_matrix(T)
   I=diag(1,T)
   det <- rep(0,length(theta))
   pi <- rep(0,length(theta))
   for (i in 1:length(theta)){
-    det<-det(Q*theta[i]+I)
-    pi[i] <- theta[i]^(T/2-1)*exp(-theta[i])*exp(-0.5*t(y)%*%(I-solve(Q*theta[i]+I))%*%y)/det^0.5
+    det<-det(A*theta[i]+I)
+    pi[i] <- theta[i]^(T/2-1)*exp(-theta[i])*exp(-0.5*t(y)%*%(I-solve(A*theta[i]+I))%*%y)/det^0.5
   }
   return (pi)
 } 
 
 T=20
 mode = optimise(pi_theta,lower = 0, upper = 6, maximum = T)$maximum
-delta_k=0.1
-theta <- seq(0,6,delta_k)
-pi_theta_k <- pi_theta(theta)
+delta_k=0.01
+theta <- seq(0,9,delta_k)
 const = integrate(pi_theta, lower = 0, upper = 10)$value
-s <- smooth.spline(theta,pi_theta_k/const)
-plot(theta,pi_theta(theta)/const)
-lines(s)
+pi_theta_k <- pi_theta(theta)/const
+#s <- smooth.spline(theta,pi_theta_k/const)
+#plot(theta,pi_theta(theta)/const)
+#lines(s)
 
 ```
 
 ## 4) 
 ```{r}
 eta <- seq(-1,1,0.01)
+set.seed(0)
 pi_eta_y_theta <- function(theta,eta,i=10){
-  QI <- Q_matrix(T)*theta+diag(1,T)
+  QI <- A_matrix(T)*theta+diag(1,T)
   QI_i <- QI[i,i]
   y_i <- y[i]
   mean <- y_i/QI_i
   var <- 1/QI_i
-  pi <- dnorm(eta,mean, var)
+  pi <- dnorm(eta,mean, sqrt(var))
   return(pi)
 }
 
 pi_eta_y <- function(theta){
   sum=rep(0,length(eta))
-  for (i in 1:length(theta))
-    sum = sum + pi_eta_y_theta(theta[i],eta)*pi_theta_k[i]*delta_k
+  for (j in 1:length(theta)){
+    sum = sum + (pi_eta_y_theta(theta[j],eta)*pi_theta_k[j]*delta_k)
+  }
   return (sum)
 }
 
 eta_10 <- pi_eta_y(theta)
-plot(eta,eta_10,type="l")
+plot(eta,eta_10)
 ```
 
 
@@ -416,10 +422,10 @@ my.hyper <- list(theta = list(prior="log.gamma", param=c(1,1)))
 formula <- y ~ -1 + f(x, model = "rw2", hyper = my.hyper, constr=FALSE)
 #Fit the model
 result <- inla(formula=formula, family="gaussian", data=df,verbose = FALSE, control.family = list(hyper = list(prec=list(initial=0,fixed=TRUE)))) 
-#,control.compute = list(config=TRUE)
 
 plot(result$summary.random$x$mean)
 plot(result$marginals.hyperpar$`Precision for x`,xlim=c(0,6))
+plot(result$marginals.random$x$index.10, xlim=c(-2,2))
 summary(result)
 ```
 
