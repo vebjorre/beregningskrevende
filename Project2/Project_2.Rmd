@@ -2,7 +2,7 @@
 title: "TMA4300 - Exercise 2"
 author: "Camilla og Vebjørn"
 date: "`r format(Sys.time(), '%d.%m.%Y')`"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -20,20 +20,21 @@ date <- coal$date #fetch data
 t0 <- date[1] #start date
 t2 <- date[191] #end date
 date <- date[-c(1,191)] #data
-plot(date, 1:189, xlab="year", ylab="cumulative number of disasters", sub="Cumulative number of coal-mining disasters in UK from 1851 to 1962")
+plot(date, 1:189, xlab="year", ylab="cumulative number of disasters",
+     sub="Cumulative number of coal-mining disasters in UK from 1851 to 1962")
 ```
 
 From the plot we can see that the cumulative number of disasters increases almost linearly until around 1900 and from there the trend is close to linear, but with a less steep slope than before. In the latter period there are some longer periods without any disaster, but also some with very frequent disasters. The period after 1945 seem to be the best in the period of these data, which is natural due to the development of technology, and it could maybe also be linked to the end of world war 2.
 
 ## 2)
-We want to model these data as a nonhomogeneous Poisson process, with constant rate $\lambda_k$ in the period $t_k$ to $t_{k+1}$, $k=0,\dots,n$. Dividing the data into two periods, with the split at $t_1\approx1900$, seems reasonable.
+We want to model these data as a nonhomogeneous Poisson process with constant rate $\lambda_k$ in the period $t_k$ to $t_{k+1}$, $k=0,\dots,n$. Dividing the data into two periods, with the split at $t_1\approx1900$, seems reasonable.
 We then get the likelihood
 $$
 f(x|t_1,\lambda_0,\lambda_1)=\lambda_0^{y_0}\lambda_1^{y_1}exp(-\lambda_0(t_1-t_0)-\lambda_1(t_2-t_1)),
 $$
 where $x$ is the observed data and $y_k$ is the number of observed disasters in the period $t_k$ to $t_{k+1}$. The priors $f(t_1)\sim \textrm{unif}(t_0,t_2)$ and $f(\lambda_i|\beta) \sim \textrm{gamma}(\alpha=2,\beta)$, for $\lambda_i=1,2$, are independent. For the hyper parameter $\beta$ we use the improper prior $f(\beta)\propto exp(-1/\beta) / \beta$.
 
-Hence, the posterior distribution for $\theta=(t_1,\lambda_0,\lambda_1,\beta)$ given $x$ up to a normalising constant is given by
+Hence, the posterior distribution for $\theta=(t_1,\lambda_0,\lambda_1,\beta)$ given $x$ is, up to a normalising constant, given by
 $$
 f(\theta|x)=\frac{f(\theta,x)}{f(x)}\propto f(\theta,x)=f(t_1)f(\beta)f(\lambda_0|\beta)f(\lambda_1|\beta)f(x|t_1,\lambda_0,\lambda_1)
 \propto f(\beta)f(\lambda_0|\beta)f(\lambda_1|\beta)f(x|t_1,\lambda_0,\lambda_1).
@@ -73,7 +74,8 @@ library(invgamma) #inverse gamma distribution
 
 #Target distribution on log-scale
 logtarget <- function(x){ # x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
-  return (-5*log(x[4]) + (x[5]+1)*log(x[2]) + (189-x[5]+1)*log(x[3]) - (1+x[2]+x[3])/x[4] + x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2 )
+  return (-5*log(x[4]) + (x[5]+1)*log(x[2]) + (189-x[5]+1)*log(x[3]) 
+          - (1+x[2]+x[3])/x[4] + x[1]*(x[3]-x[2]) + x[2]*t0 - x[3]*t2 )
 }
 
 #Full conditionals
@@ -189,9 +191,11 @@ In order to evaluate the simulated values we recall that the number of disasters
 ```{r}
 #Plot the estimated means together with data
 par(mfrow=c(1,1))
-plot(date, 1:189, xlab="Year", ylab="Cumulative number of disasters", sub="Cumulative number of coal-mining disasters in UK from 1851 to 1962")
+plot(date, 1:189, xlab="Year", ylab="Cumulative number of disasters", 
+     sub="Cumulative number of coal-mining disasters in UK from 1851 to 1962")
 lines(x=c(t0,t1hat), y=c(0,(t1hat-t0)*l0hat), col="red", lw=2)
-lines(x=c(t1hat,t2), y=c((t1hat-t0)*l0hat, (t1hat-t0)*l0hat+(t2-t1hat)*l1hat), col="red", lw=2)
+lines(x=c(t1hat,t2), y=c((t1hat-t0)*l0hat, (t1hat-t0)*l0hat+(t2-t1hat)*l1hat), 
+      col="red", lw=2)
 ```
 In the figure the points display the real data and the red lines show the posterior estimates of the process.  The plot shows that the estimated means represent the data very well. 
 
@@ -220,13 +224,13 @@ par(mfrow=c(1,2))
 plot(x4[1:2000,1], type='l', xlab="i", ylab="t1")
 acf(x4[-burnin,1], main="t1")
 ```
-For $\sigma=5$ everything look a lot better, even when we plot only the first 2000 steps. The burn-in period seem to be just around 10 steps and the autocorrelation is better than with $\sigma=1$ as was the very first try.
+For $\sigma=5$ everything looks a lot better, even when we plot only the first 2000 steps. The burn-in period seem to be just around 10 steps and the autocorrelation is better than with $\sigma=1$ as was the very first try.
 ```{r}
 par(mfrow=c(1,2))
 plot(x5[1:2000,1], type='l', xlab="i", ylab="t1")
 acf(x5[-burnin,1], main="t1")
 ```
-One could think that increasing $\sigma$ even more would only be positive, but if we look at the situation with $\sigma=20$ we see that the trace plot is fluctuating as much as we want. Most steps seem to long, but a lot of steps are rejected. This is because many proposed steps are too long and move far away from the optimal value. We also see that the autocorrelation is worse than for $\sigma=5$. Hence from the four different values for $\sigma$ we tried, $\sigma=5$ is the best one. Note that there are probably other values that are even better, but $\sigma=5$ is clearly sufficiently good to use.
+One could think that increasing $\sigma$ even more would only be positive, but if we look at the situation with $\sigma=20$ we see that the trace plot is not fluctuating as much as we want. Most steps seem to long, but a lot of steps are rejected. This is because many proposed steps are too long and move far away from the optimal value. We also see that the autocorrelation is worse than for $\sigma=5$. Hence from the four different values for $\sigma$ we tried, $\sigma=5$ is the best one. Note that there are probably other values that are even better, but $\sigma=5$ is clearly sufficiently good to use.
 
 Now we plot histograms approximating the posterior marginal distribution of $\lambda_0$ from each of the three situations, after omitting the 10000 first steps.
 ```{r}
@@ -397,11 +401,13 @@ c(t1hat2, l0hat2, l1hat2, betahat2)
 
 #Plot estimates against real data
 par(mfrow=c(1,1))
-plot(date, 1:189, xlab="Year", ylab="Cumulative number of disasters", sub="Cumulative number of coal-mining disasters in UK from 1851 to 1962")
+plot(date, 1:189, xlab="Year", ylab="Cumulative number of disasters", 
+     sub="Cumulative number of coal-mining disasters in UK from 1851 to 1962")
 lines(x=c(t0,t1hat2), y=c(0,(t1hat2-t0)*l0hat2), col="red", lw=2)
-lines(x=c(t1hat2,t2), y=c((t1hat2-t0)*l0hat2, (t1hat2-t0)*l0hat2+(t2-t1hat2)*l1hat2), col="red", lw=2)
+lines(x=c(t1hat2,t2), y=c((t1hat2-t0)*l0hat2, (t1hat2-t0)*l0hat2+(t2-t1hat2)*l1hat2), 
+      ol="red", lw=2)
 ```
-From the print-out we quickly see that these values are the almost the same as those from the single site algorithm, and the two plots are naturally almost indistinguishable.
+From the print-out we quickly see that these values are the almost the same as those from the single site algorithm, and the two corresponding plots are naturally almost indistinguishable.
 
 We also estimate $Cov[\lambda_0,\lambda_1|x]$.
 ```{r}
@@ -413,7 +419,8 @@ The print-out shows that this is practically zero, as was expected since their j
 # Problem B: INLA for Gaussian Data
 In this problem we are going to use the simulated data in the Gaussiandata.txt file. We start by plotting the dataset. 
 ```{r}
-data=read.table("https://www.math.ntnu.no/emner/TMA4300/2020v/Exercise/exercise2/Gaussiandata.txt")
+data=read.table(
+  "https://www.math.ntnu.no/emner/TMA4300/2020v/Exercise/exercise2/Gaussiandata.txt")
 names(data)="y"
 plot(data$y)
 ```
@@ -470,7 +477,8 @@ A_matrix <- function(T){
   return(QQ)
 }
 
-#The block Gibbs sampling algorithm for the posterior distribution for theta and eta given y
+#The block Gibbs sampling algorithm for the posterior distribution for theta and eta
+#given y
 block_Gibbs <- function(y, nsamples) {
   theta <- rep(0,nsamples)
   eta <- matrix(0,nsamples,T)
