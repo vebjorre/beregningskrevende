@@ -423,23 +423,44 @@ A latent Gaussian model, LGM, consists of three elements: a likelihood model, a 
 $$
 \pi(\mathbf{f}|\theta) \propto \theta^{(T-2)/2}exp\left\{\frac{\theta}{2}\sum_{t=3}^T[f_t-2f_{t-1}+f_{t-2}]^2 \right\} = \mathcal{N}(\mathbf{0},\mathbf{Q}(\theta)^{-1}).
 $$
-Hence, the latent field $\mathbf{f}$ is a Gaussian Markov random field, GMRF, with sparce precision matrix $\mathbf{Q}(\theta)^{-1}$. The precision parameter $\theta$ controls the smoothness of the vector $\mathbf{f}$ and is our hyperparameter, $\theta \sim \textrm{gamma}(1,1)$.
+Hence, the latent field $\mathbf{f}$ is a Gaussian Markov random field, GMRF, with sparce precision matrix $\mathbf{Q}(\theta)$. The precision parameter $\theta$ controls the smoothness of the vector $\mathbf{f}$ and is our hyperparameter, $\theta \sim \textrm{gamma}(1,1)$.
 
-It is possible to use INLA to estimate the parameters because our inferential interest lies in the posterior marginal for the smooth effect $\pi(\eta_t|\mathbf{y})$,$t=1,\dots,T$, and the LGM fulfill the following assumtions. Each data point $y_t$ depends only on one of the elements in the latent Gausian field $\mathbf{f}$, the linear predictor $\eta_t$. The hyperparameter vector should be small, and in our case it contains only one parameter $\theta$. The precion matrix $\mathbf{Q}(\theta)^{-1}$ is sparse, and the linear predictor depends linearly on the unkown smooth function of temporal effects.  
+It is possible to use INLA to estimate the parameters because our inferential interest lies in the posterior marginal for the smooth effect $\pi(\eta_t|\mathbf{y})$,$t=1,\dots,T$, and the LGM fulfill the following assumtions. Each data point $y_t$ depends only on one of the elements in the latent Gausian field $\mathbf{f}$, the linear predictor $\eta_t$. The hyperparameter vector should be small, and in our case it contains only one parameter $\theta$. The precision matrix $\mathbf{Q}(\theta)$ is sparse, and the linear predictor depends linearly on the unkown smooth function of temporal effects.  
 
 ## 2) 
-In this exercise we implement a block Gibbs sampling algorithm for $\pi(\eta,\theta|y)$, where we update the parameters $\theta$ and $\eta$ iteratively by sampling from the full conditional distributions $\pi(\theta|\eta,y)$ and $\pi(\eta|\theta,y)$. 
+In this exercise we implement a block Gibbs sampling algorithm for $\pi(\boldsymbol{\eta},\theta|\mathbf{y})$, where we update the parameters $\theta$ and $\eta$ iteratively by sampling from the full conditional distributions $\pi(\theta|\boldsymbol{\eta},\mathbf{y})$ and $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$. We start by finding the posterior distribution for $\theta$ and $\boldsymbol{\eta}$ given $\mathbf{y}$,
 
 
 $$
-\pi(\eta,\theta|y)=\frac{\pi(\theta,\eta,y)}{\pi(y)} \propto \pi(y|\eta)\pi(\eta|\theta)\pi(\theta) \propto \theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\left(\eta^T(Q+I)\eta + y^Ty \right) +y^T\eta  \right\}
+\pi(\boldsymbol{\eta},\theta|\mathbf{y})=\frac{\pi(\theta,\boldsymbol{\eta},\mathbf{y})}{\pi(\mathbf{y})} \propto \pi(\mathbf{y}|\boldsymbol{\eta})\pi(\boldsymbol{\eta}|\theta)\pi(\theta) \propto \theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\left(\boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta}+ \mathbf{y}^T\mathbf{y} \right) +\mathbf{y}^T\boldsymbol{\eta} \right\},
 $$
-
+where $\mathbf{I}$ is the identity matrix with dimension $T \times T$. $\mathbf{Q}$ is the precision matrix, and can be written as $\frac{1}{\theta}\mathbf{L}\mathbf{L}^T$, where 
+$$
+\mathbf{L}=\begin{bmatrix}
+1 &  &  &  &   & \\
+-2 & \ddots &  &  &  &  \\
+1 & \ddots &\ddots &  &   & \\
+ & \ddots & \ddots & \ddots &   & \\
+ &  & \ddots & \ddots & \ddots & \\
+ &  &  & \ddots & \ddots & 1 \\
+ &  &  &  & \ddots & -2 \\
+ &  &  &  &  & 1
+\end{bmatrix}_{T \times T-2.}
+$$
+From the posterior we can find the full conditionals for $\theta$ by omiting all multiplicative factors in $\pi(\boldsymbol{\eta},\theta|\mathbf{y})$ that do not depend on $\theta$.
+$$
+\pi(\theta|\boldsymbol{\eta},\mathbf{y}) \propto \theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\boldsymbol{\eta}^T\mathbf{Q}\boldsymbol{\eta}\right\} = \theta^{T/2-1}\exp\left\{ -\theta\left(1- \frac{1}{2}\boldsymbol{\eta}^T\mathbf{A}\boldsymbol{\eta}\right) \right\},
+$$
+where $\mathbf{A}$ is given by $\mathbf{A}=\frac{1}{\theta}\mathbf{Q}$. From this we can see that $\theta|\boldsymbol{\eta},\mathbf{y}$ belongs to the gamma distribution with shape parameter $\alpha=T/2$ and rate parameter $\beta=1- \frac{1}{2}\boldsymbol{\eta}^T\mathbf{A}\boldsymbol{\eta}$.
+By doing the same for $\boldsymbol{\eta}$, we find the full conditional for $\boldsymbol{\eta}$,
+$$
+\pi(\boldsymbol{\eta}|\theta,\mathbf{y}) \propto \exp\left\{ -\frac{1}{2} \boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta}+\mathbf{y}^T\boldsymbol{\eta} \right\}.
+$$
+From this we can see that $\boldsymbol{\eta}|\theta,\mathbf{y}$ is Gaussian distributed with mean $\mathbf{\mu}=(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y}$ and covariance matrix $\mathbf{\Sigma}=(\mathbf{Q}+\mathbf{I})^{-1}$.
 ```{r}
-library(MASS)
 library(Matrix)
-library(dae)
 library(matrixStats)
+library(dae)
 
 A_matrix <- function(T){
   Q <- diag(1,T,T-2)
@@ -449,6 +470,7 @@ A_matrix <- function(T){
   return(QQ)
 }
 
+#The block Gibbs sampling algorithm for the posterior distribution for theta and eta given y
 block_Gibbs <- function(y, nsamples) {
   theta <- rep(0,nsamples)
   eta <- matrix(0,nsamples,T)
@@ -456,47 +478,61 @@ block_Gibbs <- function(y, nsamples) {
   theta[1] <- rgamma(1,1,1)  
   eta[1,] <- y 
   for (i in 2:nsamples){ 
-    ## update theta
+    ## propose a new value for theta
     rate=1+0.5*t(eta[i-1,])%*%A%*%eta[i-1,]
     theta[i] <- rgamma(1,shape=T/2,rate=rate)
-    ## update the vector eta with the new theta
-    I=diag(1,T)
+    ## propose a new vector eta with the new theta
     var=solve(A*theta[i]+I,sparse=TRUE)
     mean=var%*%y
     eta[i,] <- rmvnorm(mean, var)
       
   }
-  list=cbind(theta=theta, eta=eta) 
-  return(list)
+  samples=cbind(theta=theta, eta=eta) 
+  return(samples)
 }
 
 n=10000
 y=data$y
 T <- length(y)
 A <- A_matrix(T)
-f_gibbs=block_Gibbs(y,n)
-t=seq(1,20,1)
+I=diag(1,T) #identity matrix
+f_gibbs=block_Gibbs(y,n) #sample from Gibbs
 
+#Find mean and variance from the samples of eta. Remove the first 1000 samples. 
 m <- colMeans(f_gibbs[-c(1:1000),])
 v <- colSds(f_gibbs[-c(1:1000),])
+#Find the 95% confidence bound around the mean
 m_upper <- m+qnorm(0.025)*v
 m_lower <- m-qnorm(0.025)*v
 
+#Plot the data together with the mean and the confidence bound from the samples
+t=seq(1,T,1) 
 plot(t,y)
 lines(t,m[-1])
 lines(t,m_upper[-1],col="red")
 lines(t,m_lower[-1],col="red")
-
+```
+From the plot ... 
+```{r}
+#Histogram for theta
 truehist(f_gibbs[,1])
-truehist(f_gibbs[-c(1:1000),11])
-
 ```
 
 ## 3) 
+Now we want to use the INLA scheme to approximate the posterior marginal for the hyperparameter $\theta$,  
+
+$$
+\pi(\theta|\mathbf{y}) \propto \frac{\pi(\mathbf{y}|\boldsymbol{\eta},\theta)\pi(\boldsymbol{\eta}|\theta)\pi(\theta)}{\pi(\boldsymbol{\eta}|\theta,\mathbf{y})}.
+$$
+
+In our case where the likelihood is Gaussian we dont need to approximate $\pi(\theta|\mathbf{y})$, because $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ is also Gaussian. In point 2) we saw that $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})=\mathcal{N}((\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y},(\mathbf{Q}+\mathbf{I})^{-1})$. Hence, we can write the posterior marginal for $\theta$ as 
+$$
+\pi(\theta|\mathbf{y}) \propto \frac{\theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\left(\boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta}+ \mathbf{y}^T\mathbf{y} \right) +\mathbf{y}^T\boldsymbol{\eta} \right\}}{\left|\mathbf{Q}+\mathbf{I}\right|^{1/2}\exp\left\{ -\frac{1}{2} \boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta} - 2\boldsymbol{\eta}^T\mathbf{y} + \mathbf{y}^T(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y} \right\}} = \frac{\theta^{(T-2)/2}}{\left|\mathbf{Q}+\mathbf{I}\right|^{1/2}}\exp\left\{-\theta-\frac{1}{2}\mathbf{y}^T(\mathbf{I}-(\mathbf{Q}+\mathbf{I})^{-1})\mathbf{y} \right\}.
+$$
+From this we can compute the posterior marginal $\pi(\theta|\mathbf{y})$ for different $\theta$ values. We locate $K$ supporter points $\{\theta^1,\dots, \theta^K\}$ in the area of high density of $\pi(\theta|\mathbf{y})$ and compute $\pi(\theta^k|\mathbf{y})$ for each selected $\theta^k$ using the expression above. 
 ```{r}
 pi_theta <- function(theta){
-  A<-A_matrix(T)
-  I=diag(1,T)
+  I <- diag(T)
   det <- rep(0,length(theta))
   pi <- rep(0,length(theta))
   for (i in 1:length(theta)){
@@ -506,49 +542,65 @@ pi_theta <- function(theta){
   return (pi)
 } 
 
-T=20
-mode = optimise(pi_theta,lower = 0, upper = 6, maximum = T)$maximum
-delta_k=0.01
-theta <- seq(0,9,delta_k)
-const = integrate(pi_theta, lower = 0, upper = 10)$value
-pi_theta_k <- pi_theta(theta)/const
-#s <- smooth.spline(theta,pi_theta_k/const)
-#plot(theta,pi_theta(theta)/const)
-#lines(s)
+#check the mode
+mode = optimise(pi_theta,lower = 0, upper = 10, maximum = T)$maximum
+#make a theta grid around mode
+delta_k=0.05
+theta <- seq(0,5,delta_k)
+#normalize the function
+const = integrate(pi_theta, lower = 0, upper = 5)$value
+pi_theta_k <- pi_theta(theta)/const 
+#interpolate the points
+s <- smooth.spline(theta,pi_theta_k)
+#Plot the marginal posterior for each theta_k and the interpolation 
+plot(theta,pi_theta_k)
+lines(s)
 
 ```
 
 ## 4) 
+The next step is to approximate the marginal posterior for the smooth effect, $\pi(\eta_i|\mathbf{y})$. 
+We approximate the integral by numerical integration as
+$$
+\pi(\eta_i|\mathbf{y}) = \int \pi(\eta_i|\mathbf{y},\theta)\pi(\theta|\mathbf{y})d\theta \approx
+\sum_{k=1}^{K}\pi(\eta_i|\mathbf{y},\theta^k)\pi(\theta^k|\mathbf{y})\Delta_k,
+$$
+where $\Delta_k$ are weights that depends on the location of the support points.
+
 ```{r}
-eta <- seq(-1,1,0.01)
-set.seed(0)
+#Make a grid for eta
+eta_grid <- seq(-1,1,0.01)
+
 pi_eta_y_theta <- function(theta,eta,i=10){
   QI <- A_matrix(T)*theta+diag(1,T)
   QI_i <- QI[i,i]
-  y_i <- y[i]
-  mean <- y_i/QI_i
+  mean <- y[i]/QI_i
   var <- 1/QI_i
   pi <- dnorm(eta,mean, sqrt(var))
   return(pi)
 }
 
-pi_eta_y <- function(theta){
-  sum=rep(0,length(eta))
-  for (j in 1:length(theta)){
-    sum = sum + (pi_eta_y_theta(theta[j],eta)*pi_theta_k[j]*delta_k)
+#Approximate the integral via numerical integration 
+pi_eta_y <- function(theta,i=10){
+  sum=rep(0,length(eta_grid))
+  for (k in 1:length(theta)){
+    sum = sum + (pi_eta_y_theta(theta[k],eta_grid)*pi_theta_k[k]*delta_k)
   }
   return (sum)
 }
 
-eta_10 <- pi_eta_y(theta)
-plot(eta,eta_10)
+#Approximate the marginal posterior for eta_10. 
+pi_eta_10 <- pi_eta_y(theta,i=10)
+plot(eta_grid,pi_eta_10)
+
+#Histogram for eta_10 with Gibbs
+truehist(f_gibbs[-c(1:1000),11])
 ```
 
 
 ## 5) 
+Now we want to compare our results above with the results the inla() function gives. 
 ```{r}
-#install.packages("INLA", repos=c(getOption("repos"),
-#INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 library("INLA")
 x=(1:20)
 df=data.frame(y=data$y,x=x)
