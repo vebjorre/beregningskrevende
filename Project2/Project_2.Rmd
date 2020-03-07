@@ -2,7 +2,7 @@
 title: "TMA4300 - Exercise 2"
 author: "Camilla og Vebjørn"
 date: "`r format(Sys.time(), '%d.%m.%Y')`"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +14,7 @@ In this problem we are going to analyse a data set of time intervals between suc
 
 ## 1) 
 We start by making a plot with the cumulative number of disasters along the y-axis and year along the x-axis. 
-```{r}
+```{r fig.height=4, fig.width=6 }
 library(boot)
 date <- coal$date #fetch data
 t0 <- date[1] #start date
@@ -129,7 +129,7 @@ mcmc_RW <- function(sd, ntimes){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
 ```
 
 ## 5)
-We set the tuning parameter $\sigma$ to 1, such that the proposal distribution for $t_1$ is the standard normal, and do only 2000 steps of our algorithm to evaluate its properties in the early steps.
+We set the tuning parameter $\sigma$ to 1, such that the proposal distribution for $t_1$ is the normal distribution with standard deviation $\sigma$ and mean the previous value of $t_1$. At this point we do only 2000 steps of our algorithm to easier evaluate its properties in the early steps.
 ```{r}
 #tuning parameter
 sd <- 1
@@ -149,7 +149,7 @@ plot(x1[,4], type='l', xlab="i", ylab="beta")
 
 
 
-The trace plots above show the development of each parameter. The plots for $\lambda_i$ look exactly as we want, with a short burn-in period and with the looks of a wide band. For $\beta$ there is no visible burn-in, but there are some really large values. However, this is expected with the rather large shape parameter in the inverse gamma distribution, which makes the distribution have a very long tail. Because these parameters are drawn directly from their full conditionals they also update in every iteration. This make them mix well the whole way. The proposed value for $t_1$ is not accepted at every step, such that this chain is much slower at exploring the whole domain. This means it may be smart to run the chain longer or change the tuning parameter $\sigma$. Judging by the plots of especially $t_1$ and $\lambda_1$ over several runs, the burn-in period seems vary between 50 to 500 steps. In order to have a buffer we choose to omit the 1000 first steps for each of the four parameters in the later analysis.
+The trace plots above show the development of each parameter. The plots for $\lambda_i$ look exactly as we want, with a short burn-in period and with the looks of a wide band. For $\beta$ there is no visible burn-in, but there are some really large values. However, this is expected with the rather large shape parameter in the inverse gamma distribution, which makes the distribution have a very long tail. Because these parameters are drawn directly from their full conditionals they also update in every iteration. This make them mix well the whole way. The proposed value for $t_1$ is not accepted at every step, such that this chain is much slower at exploring the whole domain. This means it may be smart to run the chain longer or change the tuning parameter $\sigma$. Judging by the plots of especially $t_1$ over several runs, the burn-in period seems vary between 50 to 500 steps. In order to have a buffer we choose to omit the 1000 first steps for each of the four parameters in the later analysis.
 
 To further evaluate the mixing properties we look at the autocorrelation function for each parameter.
 ```{r}
@@ -163,7 +163,7 @@ acf(x1[-burnin,2], main="lambda0")
 acf(x1[-burnin,3], main="lambda1")
 acf(x1[-burnin,4], main="beta")
 ```
-We immediately see that $\lambda_0$, $\lambda_1$ and $\beta$ have close to correlation between each step and thus have very good mixing properties. This is probably a result of the new values being accepted at each step and that the new proposals are not very connected to the previous step. The autocorrelation for $t_1$ is not too bad, but we see that there is some correlation over a relatively large number of steps. This could be improved by increasing the standard devation in the proposal of $t1$.
+We immediately see that $\lambda_0$, $\lambda_1$ and $\beta$ have close to zero correlation between each step and thus have very good mixing properties. This is probably a result of the new values being accepted at each step and that the new proposals are not very connected to the previous step. The autocorrelation for $t_1$ is not too bad, but we see that there is some correlation over a relatively large number of steps. This could be improved by increasing the standard devation in the proposal of $t1$.
 
 To get good estimates of the marginal posterior distributions we run the algorithm with 50000 steps and ommit the first 1000 steps from the estimations.
 ```{r}
@@ -171,13 +171,6 @@ To get good estimates of the marginal posterior distributions we run the algorit
 sd <- 1
 ntimes <- 50000
 x2 = mcmc_RW(sd, ntimes)
-
-#Histograms
-par(mfrow=c(2,2))
-truehist(x2[-burnin,1], xlab="t1")
-truehist(x2[-burnin,2], xlab="lambda0")
-truehist(x2[-burnin,3], xlab="lambda1")
-truehist(x2[-burnin,4], xlim=c(0,10), xlab="beta")
 
 #Estimated means
 t1hat <- mean(x2[-burnin,1])
@@ -187,7 +180,7 @@ betahat <- mean(x2[-burnin,4])
 c(t1hat, l0hat, l1hat, betahat)
 ```
 
-In order to evaluate the simulated values we recall that the number of disasters is modelled as a Poisson process. This means that the cumulative number of disasters in each period is a linear function of time, with slopes $\lambda0$ and $\lambda1$. Hence, we can use the estimated means of $t_1$, $\lambda_0$ and $\lambda_1$ to plot the estimated cumulative number of events together with the data.
+In order to evaluate the simulated values we recall that the number of disasters is modelled as a Poisson process. This means that the cumulative number of disasters in each period is a linear function of time, with slopes $\lambda_0$ and $\lambda_1$. Hence, we can use the estimated means of $t_1$, $\lambda_0$ and $\lambda_1$ to plot the estimated cumulative number of events together with the data.
 ```{r}
 #Plot the estimated means together with data
 par(mfrow=c(1,1))
@@ -197,12 +190,12 @@ lines(x=c(t0,t1hat), y=c(0,(t1hat-t0)*l0hat), col="red", lw=2)
 lines(x=c(t1hat,t2), y=c((t1hat-t0)*l0hat, (t1hat-t0)*l0hat+(t2-t1hat)*l1hat), 
       col="red", lw=2)
 ```
-In the figure the points display the real data and the red lines show the posterior estimates of the process.  The plot shows that the estimated means represent the data very well. 
+In the figure the points display the real data and the red lines show the posterior estimates of the process.  The plot shows that the estimated means represent the data very well. It seems like a nonhomogeneous Poisson process with two different intensities is a proper choice of model for these data.
 
 It is difficult to directly evaluate the simulated value of $\beta$. However, the only interest we really have in $\beta$ is the role it plays in generating the $\lambda_i$. Since these parameter values work nicely, the $\beta$ works too.
 
 ## 6)
-Now we run 50000 steps of the algorithm with $\sigma\in{0.2,5,20}$. And display trace plots and autocorrelation for $t_1$ for each case. We only display $t_1$ because it has proven to be the parameter that is most difficult to handle for the algorithm.
+Now we run 50000 steps of the algorithm with $\sigma\in\{0.2,5,20\}$. And display trace plots and autocorrelation for $t_1$ for each case. We only display $t_1$ because it has proven to be the parameter that is most difficult to handle for the algorithm.
 ```{r}
 sd1 <- .2
 sd2 <- 5
@@ -224,31 +217,36 @@ par(mfrow=c(1,2))
 plot(x4[1:2000,1], type='l', xlab="i", ylab="t1")
 acf(x4[-burnin,1], main="t1")
 ```
-For $\sigma=5$ everything looks a lot better, even when we plot only the first 2000 steps. The burn-in period seem to be just around 10 steps and the autocorrelation is better than with $\sigma=1$ as was the very first try.
+For $\sigma=5$ everything looks a lot better, even when we plot only the first 2000 steps. The burn-in period seem to be just around 10 steps and the autocorrelation is even better here than with $\sigma=1$.
 ```{r}
 par(mfrow=c(1,2))
 plot(x5[1:2000,1], type='l', xlab="i", ylab="t1")
 acf(x5[-burnin,1], main="t1")
 ```
-One could think that increasing $\sigma$ even more would only be positive, but if we look at the situation with $\sigma=20$ we see that the trace plot is not fluctuating as much as we want. Most steps seem to long, but a lot of steps are rejected. This is because many proposed steps are too long and move far away from the optimal value. We also see that the autocorrelation is worse than for $\sigma=5$. Hence from the four different values for $\sigma$ we tried, $\sigma=5$ is the best one. Note that there are probably other values that are even better, but $\sigma=5$ is clearly sufficiently good to use.
+One could think that increasing $\sigma$ even more would only be positive, but if we look at the situation with $\sigma=20$ we see that the trace plot is not fluctuating as much as we want. Most steps seem to be long, but a lot of steps are rejected. This is because many proposed steps are too long and move far away from the optimal value. We also see that the autocorrelation is worse than for $\sigma=5$. Hence from the four different values for $\sigma$ we tried, $\sigma=5$ is the best one. Note that there are probably other values that are even better, but $\sigma=5$ is clearly sufficiently good to use.
 
-Now we plot histograms approximating the posterior marginal distribution of $\lambda_0$ from each of the three situations, after omitting the 10000 first steps.
+Now we plot histograms approximating the posterior marginal distribution of $\lambda_0$ from each of the four chains, after omitting the 10000 first steps due to the long burn-in with $\sigma=0.2$.
 ```{r}
 burnin=c(1:10000)
 par(mfrow=c(2,2))
 truehist(x3[-burnin,2], xlab="marginal for lambda0 with sigma=0.2")
+truehist(x2[-burnin,2], xlab="marginal for lambda0 with sigma=1")
 truehist(x4[-burnin,2], xlab="marginal for lambda0 with sigma=5")
 truehist(x5[-burnin,2], xlab="marginal for lambda0 with sigma=20")
 ```
-We see that the three histograms are close to identical and it seems safe to assume that they have the same limiting distribution.
+We see that all histograms are close to identical and it seems safe to assume that they have the same limiting distribution.
 
 ## 7) 
-Instead of single site updates we now do want to do two block proposals. In the first block we keep $\beta$ unchanged and start by generating $\tilde t_1$ from a normal distribution with the current value of $t_1$ as mean and standard deviation $\sigma_1$. We then generate $\lambda_0$ and $\lambda_1$ from their joint full conditional given $\tilde t_1$, i.e. $f(\lambda_0, \lambda_1 | x, \tilde t_1, \beta)$. We observe that this joint density is simply the product of their marginal full conditionals. Thus they are independent and can be generated from their separate marginals $f(\lambda_i | x, \tilde t_1, \beta)$. Since we now update three values at the same time it is reasonable to just use the joint density function of all the parameters in the acceptance probability. Thus, 
+Instead of single site updates we now want to do two block proposals. In the first block we keep $\beta$ unchanged and start by generating $\tilde t_1$ from a normal distribution with the current value of $t_1$ as mean and standard deviation $\sigma_1$. We then generate $\lambda_0$ and $\lambda_1$ from their joint full conditional given $\tilde t_1$, that is
+$$
+f(\lambda_0, \lambda_1 | x, \tilde t_1, \beta) \propto \lambda_0^{\tilde y_0+1}\lambda_1^{\tilde y_1+1}\exp\{-\lambda_0(1/\beta+\tilde t_1-t_0)-\lambda_1(1/\beta+t_2-\tilde t_1)\}.
+$$
+We observe that this is simply the product of the marginal full conditionals of $\lambda_0$ and $\lambda_1$. Thus they are independent and can be generated from their separate marginals $f(\lambda_i | x, \tilde t_1, \beta)$. Since we now update three values at the same time it is reasonable to just use the joint density function of all the parameters in the acceptance probability. Thus, 
 $$
 \alpha = \min\{1,\frac{f(\tilde\theta|x)}{f(\theta|x)}\},
 $$
 where $\tilde\theta=(\tilde t_1, \tilde\lambda_0, \tilde\lambda_1, \beta)$.
-The second block is identical to the first except keeping $t_1$ constant and instead proposing $\beta$ from the normal distribution with $\sigma_2$ as standard deviation. We use the same initial values as in single site algorithm.
+The second block is equivalent to the first, but we are now keeping $t_1$ constant and instead proposing $\beta$ from the normal distribution with $\sigma_2$ as standard deviation. We use the same initial values as in the single site algorithm.
 
 ```{r}
 #block MCMC algorithm
@@ -290,6 +288,7 @@ mcmc_block <- function(sd, ntimes){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
     #Block 2
     #rw proposal
     beta <- rnorm(1,mean=x[i-1,4], sd=sd[2])
+    #reject if beta<=0
     if (beta>0){
       temp <- x[i,]
       temp[4] <- beta
@@ -361,11 +360,11 @@ acf(x.b7[-burnin,1],main="sigma=(1,20)")
 acf(x.b8[-burnin,1],main="sigma=(5,5)")
 ```
 
-We observe very similar patterns as with the single site update. Having $\sigma_i=0.2$ is too small for both parameters and lead to very correlated steps and slow mixing. Having $\sigma_i=20$ works better, but also here too many steps get rejected. Out of the tested combinations of tuning parameters we get the best results with $\sigma=(5,1)$, where the burn-in is very short and the autocorrelation goes to zero before lag 10. This makes sense since the scale of $t_1$ is much larger than the scale of $\beta$ and $\sigma_2=5$ is too large.
+We observe very similar patterns as with the single site update. Having $\sigma_i=0.2$ is too small for both parameters and lead to very correlated steps and slow mixing. Having $\sigma_i=20$ works better, but also here too many steps get rejected. Out of the tested combinations of tuning parameters we get the best results with $\sigma=(5,1)$, where the burn-in is very short and the autocorrelation goes to zero before lag 10. This makes sense since the scale of $t_1$ is much larger than the scale of $\beta$ and using $\sigma_2=5$ in the proposal for $\beta$ is too large.
 
-It seems like it is easier make each step less correlated and hence get better mixing with the block update. The burn-in period varies between each time the algorithm is run, but it seems like it is easier to handle bad tuning parameters if you use the block update, especially if at least one of the tuning parameters is reasonably chosen.
+It seems like it is easier to make each step less correlated and hence get better mixing with the block update. The burn-in period varies between each time the algorithm is run, but it seems like it is easier to handle bad tuning parameters if you use the block update, especially if at least one of the tuning parameters is reasonably chosen.
 
-Since $\sigma=(5,1)$ gave the best results we keep using that in the rest of the exercise. Since we have mostly compared the behaviour of $t_1$ we confirm our decision by displaying trace plots all parameters for the winning Markov chain.
+Since $\sigma=(5,1)$ gave the best results we keep using that in the rest of the exercise. Since we have mostly compared the behaviour of $t_1$ we confirm our decision by displaying trace plots for all parameters in the winning Markov chain.
 ```{r}
 par(mfrow=c(2,2))
 plot(x.b8[,1], type='l', xlab="i", ylab="t1")
@@ -405,7 +404,7 @@ plot(date, 1:189, xlab="Year", ylab="Cumulative number of disasters",
      sub="Cumulative number of coal-mining disasters in UK from 1851 to 1962")
 lines(x=c(t0,t1hat2), y=c(0,(t1hat2-t0)*l0hat2), col="red", lw=2)
 lines(x=c(t1hat2,t2), y=c((t1hat2-t0)*l0hat2, (t1hat2-t0)*l0hat2+(t2-t1hat2)*l1hat2), 
-      ol="red", lw=2)
+      col="red", lw=2)
 ```
 From the print-out we quickly see that these values are the almost the same as those from the single site algorithm, and the two corresponding plots are naturally almost indistinguishable.
 
@@ -414,7 +413,7 @@ We also estimate $Cov[\lambda_0,\lambda_1|x]$.
 #Cov[lambda0,lambda1]:
 cov(x.b8[-burnin,2], x.b8[-burnin,3])
 ```
-The print-out shows that this is practically zero, as was expected since their joint full conditional was the product of the two marginal full conditionals.
+The print-out shows that the covariance between $\lambda_0$ and $\lambda_1$ is practically zero. This was expected since their joint full conditional is the product of the two marginal full conditionals which means they are independent.
 
 # Problem B: INLA for Gaussian Data
 In this problem we are going to use the simulated data in the Gaussiandata.txt file. We start by plotting the dataset. 
