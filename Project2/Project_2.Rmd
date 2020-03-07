@@ -576,13 +576,14 @@ where $\Delta_k$ are weights that depends on the location of the support points.
 
 ```{r}
 #Make a grid for eta
-eta_grid <- seq(-1,1,0.01)
+eta_grid <- seq(-2,2,0.01)
 
 pi_eta_y_theta <- function(theta,eta,i=10){
   QI <- A_matrix(T)*theta+diag(1,T)
-  QI_i <- QI[i,i]
-  mean <- y[i]/QI_i
-  var <- 1/QI_i
+  B <- solve(QI)
+  B_i <- B[i,i]
+  mean <- (B %*% y)[i]
+  var <- B_i
   pi <- dnorm(eta,mean, sqrt(var))
   return(pi)
 }
