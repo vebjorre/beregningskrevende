@@ -2,7 +2,7 @@
 title: "TMA4300 - Exercise 2"
 author: "Camilla og Vebjørn"
 date: "`r format(Sys.time(), '%d.%m.%Y')`"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -163,6 +163,7 @@ acf(x1[-burnin,2], main="lambda0")
 acf(x1[-burnin,3], main="lambda1")
 acf(x1[-burnin,4], main="beta")
 ```
+
 We immediately see that $\lambda_0$, $\lambda_1$ and $\beta$ have close to zero correlation between each step and thus have very good mixing properties. This is probably a result of the new values being accepted at each step and that the new proposals are not very connected to the previous step. The autocorrelation for $t_1$ is not too bad, but we see that there is some correlation over a relatively large number of steps. This could be improved by increasing the standard devation in the proposal of $t1$.
 
 To get good estimates of the marginal posterior distributions we run the algorithm with 50000 steps and ommit the first 1000 steps from the estimations.
@@ -190,6 +191,7 @@ lines(x=c(t0,t1hat), y=c(0,(t1hat-t0)*l0hat), col="red", lw=2)
 lines(x=c(t1hat,t2), y=c((t1hat-t0)*l0hat, (t1hat-t0)*l0hat+(t2-t1hat)*l1hat), 
       col="red", lw=2)
 ```
+
 In the figure the points display the real data and the red lines show the posterior estimates of the process.  The plot shows that the estimated means represent the data very well. It seems like a nonhomogeneous Poisson process with two different intensities is a proper choice of model for these data.
 
 It is difficult to directly evaluate the simulated value of $\beta$. However, the only interest we really have in $\beta$ is the role it plays in generating the $\lambda_i$. Since these parameter values work nicely, the $\beta$ works too.
@@ -211,18 +213,21 @@ par(mfrow=c(1,2))
 plot(x3[1:10000,1], type='l', xlab="i", ylab="t1")
 acf(x3[-burnin,1], main="t1")
 ```
+
 The first chain was generated with $\sigma=0.2$. The trace plot shows us that the value for $t_1$ do very short steps and therefore the mixing is very slow. This also leads to a rather long burn-in period and we cannot say for sure that the burn-in period is over even after several thousand steps. The autocorrelation function shows the same story, that points are highly correlated over long distances. Thus, the chain converges very slowly.
 ```{r}
 par(mfrow=c(1,2))
 plot(x4[1:2000,1], type='l', xlab="i", ylab="t1")
 acf(x4[-burnin,1], main="t1")
 ```
+
 For $\sigma=5$ everything looks a lot better, even when we plot only the first 2000 steps. The burn-in period seem to be just around 10 steps and the autocorrelation is even better here than with $\sigma=1$.
 ```{r}
 par(mfrow=c(1,2))
 plot(x5[1:2000,1], type='l', xlab="i", ylab="t1")
 acf(x5[-burnin,1], main="t1")
 ```
+
 One could think that increasing $\sigma$ even more would only be positive, but if we look at the situation with $\sigma=20$ we see that the trace plot is not fluctuating as much as we want. Most steps seem to be long, but a lot of steps are rejected. This is because many proposed steps are too long and move far away from the optimal value. We also see that the autocorrelation is worse than for $\sigma=5$. Hence from the four different values for $\sigma$ we tried, $\sigma=5$ is the best one. Note that there are probably other values that are even better, but $\sigma=5$ is clearly sufficiently good to use.
 
 Now we plot histograms approximating the posterior marginal distribution of $\lambda_0$ from each of the four chains, after omitting the 10000 first steps due to the long burn-in with $\sigma=0.2$.
@@ -234,6 +239,7 @@ truehist(x2[-burnin,2], xlab="marginal for lambda0 with sigma=1")
 truehist(x4[-burnin,2], xlab="marginal for lambda0 with sigma=5")
 truehist(x5[-burnin,2], xlab="marginal for lambda0 with sigma=20")
 ```
+
 We see that all histograms are close to identical and it seems safe to assume that they have the same limiting distribution.
 
 ## 7) 
@@ -372,6 +378,7 @@ plot(x.b8[,2], type='l', xlab="i", ylab="lambda0")
 plot(x.b8[,3], type='l', xlab="i", ylab="lambda1")
 plot(x.b8[,4], type='l', xlab="i", ylab="beta")
 ```
+
 Here we see that everything is fine and that omitting the 500 first steps should be more than enough when making estimates. In order to get good estimates we run the chain for 50000 steps and plot histograms of each parameter to estimate the marginal posterior distributions.
 
 ```{r}
@@ -416,16 +423,16 @@ cov(x.b8[-burnin,2], x.b8[-burnin,3])
 The print-out shows that the covariance between $\lambda_0$ and $\lambda_1$ is practically zero. This was expected since their joint full conditional is the product of the two marginal full conditionals which means they are independent.
 
 # Problem B: INLA for Gaussian Data
-In this problem we are going to use the simulated data in the Gaussiandata.txt file. We start by plotting the dataset. 
+In this problem we are going to use the simulated data plotted below. 
 ```{r}
 data=read.table(
   "https://www.math.ntnu.no/emner/TMA4300/2020v/Exercise/exercise2/Gaussiandata.txt")
 names(data)="y"
-plot(data$y)
+plot(data$y, xlab="t", ylab="y")
 ```
 
 ## 1)
-A latent Gaussian model, LGM, consists of three elements: a likelihood model, a latent Gaussian field and a vector of hyperparameters. In our model the observations $y_t$ are assumed independent and Gaussian distributed with mean $\eta_t$ and known unit varuance. Hence, the likelihood model is given as $y_t|\eta_t=\mathcal{N}(\eta_t,1); t=1,...T$. The linear predictor $\eta_t$ is linked to a smooth effect of time $t$ as $\eta_t=f_t$. For the vector $\mathbf{f}=(f_1,\dots, f_T)$ we have the second order random walk as the prior distribution, such that
+A latent Gaussian model, LGM, consists of three elements: a likelihood model, a latent Gaussian field and a vector of hyperparameters. In our model the observations $y_t$ are assumed independent and Gaussian distributed with mean $\eta_t$ and known unit varuance. Hence, the likelihood model is given as $y_t|\eta_t=\mathcal{N}(\eta_t,1); t=1,...,T$. The linear predictor $\eta_t$ is linked to a smooth effect of time $t$ as $\eta_t=f_t$. For the vector $\mathbf{f}=(f_1,\dots, f_T)$ we have the second order random walk as the prior distribution, such that
 $$
 \pi(\mathbf{f}|\theta) \propto \theta^{(T-2)/2}exp\left\{\frac{\theta}{2}\sum_{t=3}^T[f_t-2f_{t-1}+f_{t-2}]^2 \right\} = \mathcal{N}(\mathbf{0},\mathbf{Q}(\theta)^{-1}).
 $$
@@ -505,7 +512,8 @@ A <- A_matrix(T)
 I=diag(1,T) #identity matrix
 f_gibbs=block_Gibbs(y,n) #sample from Gibbs
 
-#Find mean and variance from the samples of eta. Remove the first 1000 samples. 
+#Find mean and variance from the samples of eta. 
+#Omit the first 1000 samples to get good estimates.
 m <- colMeans(f_gibbs[-c(1:1000),])
 v <- colSds(f_gibbs[-c(1:1000),])
 #Find the 95% confidence bound around the mean
@@ -519,11 +527,15 @@ lines(t,m[-1])
 lines(t,m_upper[-1],col="red")
 lines(t,m_lower[-1],col="red")
 ```
-From the plot ... 
+
+In the figure above the points display the observed time series, the black line the posterior estimated mean of the smooth effect and the red lines shows the estimated confidence interval. The plot shows that a second order random walk model fits good for modeling the smooth effects of the temporal effects. 
+
 ```{r}
 #Histogram for theta
-truehist(f_gibbs[,1])
+truehist(f_gibbs[,1],xlim = c(0,5),xlab="Marginal for theta")
 ```
+
+The histogram shows that the marginal posterior of $\theta$ are close to a Gamma distribution, which is the same kind of distribution $\theta$ was generated from, $\pi(\theta|\mathbf{y},\boldsymbol{\eta})$. 
 
 ## 3) 
 Now we want to use the INLA scheme to approximate the posterior marginal for the hyperparameter $\theta$,  
@@ -544,7 +556,8 @@ pi_theta <- function(theta){
   pi <- rep(0,length(theta))
   for (i in 1:length(theta)){
     det<-det(A*theta[i]+I)
-    pi[i] <- theta[i]^(T/2-1)*exp(-theta[i])*exp(-0.5*t(y)%*%(I-solve(A*theta[i]+I))%*%y)/det^0.5
+    pi[i] <- theta[i]^(T/2-1)*
+      exp(-theta[i])*exp(-0.5*t(y)%*%(I-solve(A*theta[i]+I))%*%y)/det^0.5
   }
   return (pi)
 } 
@@ -559,11 +572,14 @@ const = integrate(pi_theta, lower = 0, upper = 5)$value
 pi_theta_k <- pi_theta(theta)/const 
 #interpolate the points
 s <- smooth.spline(theta,pi_theta_k)
-#Plot the marginal posterior for each theta_k and the interpolation 
-plot(theta,pi_theta_k)
+#Plot the marginal posterior for each theta_k and the interpolation
+plot(theta,pi_theta_k, xlab="", ylab="", 
+     sub="Marginal posterior distribution for the hyperparameter theta")
 lines(s)
 
 ```
+
+The figur above shows the marginal posterior for the hyperparameter $\pi(\theta|\mathbf{y})$ and the points indicate the density at the chosen point $\theta^1,\dots, \theta^K$. The marginal posterior distribution are close to identically with the MCMC estimate we obtained in point 2). This is not suprising since in the case with Gaussian likelihood we can compute the full conditional $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ exactly, instead of approximating it.   
 
 ## 4) 
 The next step is to approximate the marginal posterior for the smooth effect, $\pi(\eta_i|\mathbf{y})$. 
@@ -592,37 +608,57 @@ pi_eta_y_theta <- function(theta,eta,i=10){
 pi_eta_y <- function(theta,i=10){
   sum=rep(0,length(eta_grid))
   for (k in 1:length(theta)){
-    sum = sum + (pi_eta_y_theta(theta[k],eta_grid)*pi_theta_k[k]*delta_k)
+    sum = sum + (pi_eta_y_theta(theta[k],eta_grid)*pi_theta_k[k]*delta_k) 
   }
   return (sum)
 }
 
 #Approximate the marginal posterior for eta_10. 
 pi_eta_10 <- pi_eta_y(theta,i=10)
-plot(eta_grid,pi_eta_10)
+plot(eta_grid,pi_eta_10, 
+     xlab="Marginal posterior distribution for the smooth effect eta_10", ylab="")
 
 #Histogram for eta_10 with Gibbs
-truehist(f_gibbs[-c(1:1000),11])
+truehist(f_gibbs[-c(1:1000),11], xlab="marginal for eta_10", xlim=c(-2,2))
 ```
 
+The first figure shows the approximation of the marginal
+posterior for the smooth efftct for $i=10$, $\pi(\eta_{10}|\mathbf{y})$ found by the inla scheme and the last figure shows the estimation obtained via Gibbs sampling. The distributions are almost identically. Since the marginal distribution $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ can be easily found, the only approximation error for $\pi(\eta_i|\mathbf{y})$ with inla comes from the numerical integration. 
 
 ## 5) 
 Now we want to compare our results above with the results the inla() function gives. 
 ```{r}
 library("INLA")
-x=(1:20)
-df=data.frame(y=data$y,x=x)
+t=(1:20)
+df=data.frame(y=data$y,t=t)
 
 # specify the prior
 my.hyper <- list(theta = list(prior="log.gamma", param=c(1,1)))
 # specify the linear predictor
-formula <- y ~ -1 + f(x, model = "rw2", hyper = my.hyper, constr=FALSE)
+formula <- y ~ -1 + f(t, model = "rw2", hyper = my.hyper, constr=FALSE)
 #Fit the model
-result <- inla(formula=formula, family="gaussian", data=df,verbose = FALSE, control.family = list(hyper = list(prec=list(initial=0,fixed=TRUE)))) 
-
-plot(result$summary.random$x$mean)
-plot(result$marginals.hyperpar$`Precision for x`,xlim=c(0,6))
-plot(result$marginals.random$x$index.10, xlim=c(-2,2))
-summary(result)
+result <- inla(formula=formula, family="gaussian", data=df,verbose = FALSE, 
+               control.family = list(hyper = list(prec=list(initial=0,fixed=TRUE)))) 
 ```
+
+
+```{r}
+#Plot the data toghether with the smooth effect eta and the confidence interval 
+plot(t,y, sub="Observed data together with the posterior estimated mean")
+lines(result$summary.random$t$mean)
+m_lower <- result$summary.random$t$mean-qnorm(0.025)*result$summary.random$t$sd
+m_upper <- result$summary.random$t$mean+qnorm(0.025)*result$summary.random$t$sd
+lines(t,m_lower, col="red")
+lines(t,m_upper, col="red")
+
+#Plot posterior marginal for the hyperparameter theta
+plot(result$marginals.hyperpar$`Precision for t`,xlim=c(0,6), xlab="", ylab = "", 
+     sub=" Posterior distribution for the hyperparameter theta")
+
+#Plot the marginal posterior for eta_10
+plot(result$marginals.random$t$index.10, xlim=c(-2,2), xlab = "", ylab="", 
+     sub="Marginal posterior distribution for the smooth effect eta_10")
+```
+
+The result from inla is close to identically with the result obtained with Gibbs sampling and the inla scheme. 
 
