@@ -436,7 +436,7 @@ A latent Gaussian model, LGM, consists of three elements: a likelihood model, a 
 $$
 \pi(\mathbf{f}|\theta) \propto \theta^{(T-2)/2}exp\left\{\frac{\theta}{2}\sum_{t=3}^T[f_t-2f_{t-1}+f_{t-2}]^2 \right\} = \mathcal{N}(\mathbf{0},\mathbf{Q}(\theta)^{-1}).
 $$
-Hence, the latent field $\mathbf{f}$ is a Gaussian Markov random field, GMRF, with sparce precision matrix $\mathbf{Q}(\theta)$. The precision parameter $\theta$ controls the smoothness of the vector $\mathbf{f}$ and is our hyperparameter, $\theta \sim \textrm{gamma}(1,1)$.
+Hence, the latent field $\mathbf{f}$ is a Gaussian Markov random field, GMRF, with sparse precision matrix $\mathbf{Q}(\theta)$. The precision parameter $\theta$ controls the smoothness of the vector $\mathbf{f}$ and is our hyperparameter, $\theta \sim \textrm{gamma}(1,1)$.
 
 It is possible to use INLA to estimate the parameters because our inferential interest lies in the posterior marginal for the smooth effect $\pi(\eta_t|\mathbf{y})$,$t=1,\dots,T$, and the LGM fulfill the following assumtions. Each data point $y_t$ depends only on one of the elements in the latent Gausian field $\mathbf{f}$, the linear predictor $\eta_t$. The hyperparameter vector should be small, and in our case it contains only one parameter $\theta$. The precision matrix $\mathbf{Q}(\theta)$ is sparse, and the linear predictor depends linearly on the unkown smooth function of temporal effects.  
 
@@ -447,7 +447,7 @@ In this exercise we implement a block Gibbs sampling algorithm for $\pi(\boldsym
 $$
 \pi(\boldsymbol{\eta},\theta|\mathbf{y})=\frac{\pi(\theta,\boldsymbol{\eta},\mathbf{y})}{\pi(\mathbf{y})} \propto \pi(\mathbf{y}|\boldsymbol{\eta})\pi(\boldsymbol{\eta}|\theta)\pi(\theta) \propto \theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\left(\boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta}+ \mathbf{y}^T\mathbf{y} \right) +\mathbf{y}^T\boldsymbol{\eta} \right\},
 $$
-where $\mathbf{I}$ is the identity matrix with dimension $T \times T$. $\mathbf{Q}$ is the precision matrix, and can be written as $\frac{1}{\theta}\mathbf{L}\mathbf{L}^T$, where 
+where $\mathbf{I}$ is the identity matrix with dimension $T \times T$. $\mathbf{Q}$ is the precision matrix, and can be written as $\theta \cdot\mathbf{L}\mathbf{L}^T$, where 
 $$
 \mathbf{L}=\begin{bmatrix}
 1 &  &  &  &   & \\
@@ -458,18 +458,18 @@ $$
  &  &  & \ddots & \ddots & 1 \\
  &  &  &  & \ddots & -2 \\
  &  &  &  &  & 1
-\end{bmatrix}_{T \times T-2.}
+\end{bmatrix}_{T \times (T-2).}
 $$
 From the posterior we can find the full conditionals for $\theta$ by omiting all multiplicative factors in $\pi(\boldsymbol{\eta},\theta|\mathbf{y})$ that do not depend on $\theta$.
 $$
 \pi(\theta|\boldsymbol{\eta},\mathbf{y}) \propto \theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\boldsymbol{\eta}^T\mathbf{Q}\boldsymbol{\eta}\right\} = \theta^{T/2-1}\exp\left\{ -\theta\left(1- \frac{1}{2}\boldsymbol{\eta}^T\mathbf{A}\boldsymbol{\eta}\right) \right\},
 $$
 where $\mathbf{A}$ is given by $\mathbf{A}=\frac{1}{\theta}\mathbf{Q}$. From this we can see that $\theta|\boldsymbol{\eta},\mathbf{y}$ belongs to the gamma distribution with shape parameter $\alpha=T/2$ and rate parameter $\beta=1- \frac{1}{2}\boldsymbol{\eta}^T\mathbf{A}\boldsymbol{\eta}$.
-By doing the same for $\boldsymbol{\eta}$, we find the full conditional for $\boldsymbol{\eta}$,
+By doing the same for $\boldsymbol{\eta}$, we find the full conditional 
 $$
 \pi(\boldsymbol{\eta}|\theta,\mathbf{y}) \propto \exp\left\{ -\frac{1}{2} \boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta}+\mathbf{y}^T\boldsymbol{\eta} \right\}.
 $$
-From this we can see that $\boldsymbol{\eta}|\theta,\mathbf{y}$ is Gaussian distributed with mean $\mathbf{\mu}=(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y}$ and covariance matrix $\mathbf{\Sigma}=(\mathbf{Q}+\mathbf{I})^{-1}$.
+From this we can see that $\boldsymbol{\eta}|\theta,\mathbf{y}$ is Gaussian distributed with mean $\mathbf{\mu}=(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y}$ and covariance matrix $\mathbf{\Sigma}=(\mathbf{Q}+\mathbf{I})^{-1}$. We now implement the algorithm and run it with 10000 steps.
 ```{r}
 library(Matrix)
 library(matrixStats)
@@ -512,10 +512,16 @@ A <- A_matrix(T)
 I=diag(1,T) #identity matrix
 f_gibbs=block_Gibbs(y,n) #sample from Gibbs
 
+par(mfrow=c(2,1))
+plot(f_gibbs[1:1000,1], type="l",xlab="i", ylab="theta")
+plot(f_gibbs[1:1000,2], type="l",xlab="i", ylab="eta1")
+```
+To evaluate the burn-in we make trace plots for $\theta$ and $\eta_1$. We see that these look very nice and that the burn-in period is almost neglibible for both parameters. To be on the safe side, we choose to omit the first 200 steps.
+```{r}
 #Find mean and variance from the samples of eta. 
-#Omit the first 1000 samples to get good estimates.
-m <- colMeans(f_gibbs[-c(1:1000),])
-v <- colSds(f_gibbs[-c(1:1000),])
+#Omit the first 200 samples to get good estimates.
+m <- colMeans(f_gibbs[-c(1:200),])
+v <- colSds(f_gibbs[-c(1:200),])
 #Find the 95% confidence bound around the mean
 m_upper <- m+qnorm(0.025)*v
 m_lower <- m-qnorm(0.025)*v
@@ -532,10 +538,10 @@ In the figure above the points display the observed time series, the black line 
 
 ```{r}
 #Histogram for theta
-truehist(f_gibbs[,1],xlim = c(0,5),xlab="Marginal for theta")
+truehist(f_gibbs[-c(1:200),1],xlim = c(0,5),xlab="Marginal for theta")
 ```
 
-The histogram shows that the marginal posterior of $\theta$ are close to a Gamma distribution, which is the same kind of distribution $\theta$ was generated from, $\pi(\theta|\mathbf{y},\boldsymbol{\eta})$. 
+The histogram shows that the marginal posterior of $\theta$ is close to a Gamma distribution, which is the same kind of distribution $\theta$ was generated from, namely $\pi(\theta|\mathbf{y},\boldsymbol{\eta})$. 
 
 ## 3) 
 Now we want to use the INLA scheme to approximate the posterior marginal for the hyperparameter $\theta$,  
@@ -546,7 +552,10 @@ $$
 
 In our case where the likelihood is Gaussian we dont need to approximate $\pi(\theta|\mathbf{y})$, because $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ is also Gaussian. In point 2) we saw that $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})=\mathcal{N}((\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y},(\mathbf{Q}+\mathbf{I})^{-1})$. Hence, we can write the posterior marginal for $\theta$ as 
 $$
-\pi(\theta|\mathbf{y}) \propto \frac{\theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\left(\boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta}+ \mathbf{y}^T\mathbf{y} \right) +\mathbf{y}^T\boldsymbol{\eta} \right\}}{\left|\mathbf{Q}+\mathbf{I}\right|^{1/2}\exp\left\{ -\frac{1}{2} \boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta} - 2\boldsymbol{\eta}^T\mathbf{y} + \mathbf{y}^T(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y} \right\}} = \frac{\theta^{(T-2)/2}}{\left|\mathbf{Q}+\mathbf{I}\right|^{1/2}}\exp\left\{-\theta-\frac{1}{2}\mathbf{y}^T(\mathbf{I}-(\mathbf{Q}+\mathbf{I})^{-1})\mathbf{y} \right\}.
+\pi(\theta|\mathbf{y}) \propto \frac{\theta^{(T-2)/2}\exp\left\{ -\theta -\frac{1}{2}\left(\boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta}+ \mathbf{y}^T\mathbf{y} \right) +\mathbf{y}^T\boldsymbol{\eta} \right\}}{\left|\mathbf{Q}+\mathbf{I}\right|^{1/2}\exp\left\{ -\frac{1}{2} \boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta} - 2\boldsymbol{\eta}^T\mathbf{y} + \mathbf{y}^T(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y} \right\}}
+$$
+$$
+= \frac{\theta^{(T-2)/2}}{\left|\mathbf{Q}+\mathbf{I}\right|^{1/2}}\exp\left\{-\theta-\frac{1}{2}\mathbf{y}^T(\mathbf{I}-(\mathbf{Q}+\mathbf{I})^{-1})\mathbf{y} \right\}.
 $$
 From this we can compute the posterior marginal $\pi(\theta|\mathbf{y})$ for different $\theta$ values. We locate $K$ supporter points $\{\theta^1,\dots, \theta^K\}$ in the area of high density of $\pi(\theta|\mathbf{y})$ and compute $\pi(\theta^k|\mathbf{y})$ for each selected $\theta^k$ using the expression above. 
 ```{r}
@@ -579,16 +588,16 @@ lines(s)
 
 ```
 
-The figur above shows the marginal posterior for the hyperparameter $\pi(\theta|\mathbf{y})$ and the points indicate the density at the chosen point $\theta^1,\dots, \theta^K$. The marginal posterior distribution are close to identically with the MCMC estimate we obtained in point 2). This is not suprising since in the case with Gaussian likelihood we can compute the full conditional $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ exactly, instead of approximating it.   
+The figure above shows the marginal posterior for the hyperparameter $\pi(\theta|\mathbf{y})$ and the points indicate the density at the points $\theta^1,\dots, \theta^K$. The marginal posterior distribution is close to identical to the MCMC estimate we obtained in point 2). This is not surprising since in the case with Gaussian likelihood we can compute the full conditional $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ exactly, instead of approximating it.   
 
 ## 4) 
-The next step is to approximate the marginal posterior for the smooth effect, $\pi(\eta_i|\mathbf{y})$. 
+The next step is to approximate the marginal posterior for the smooth effects, $\pi(\eta_i|\mathbf{y})$. Since $\pi(\boldsymbol\eta|\theta,\mathbf y)$ is Gaussian, it is straight forward to find the marginal posterior for each $\eta_i$.
 We approximate the integral by numerical integration as
 $$
 \pi(\eta_i|\mathbf{y}) = \int \pi(\eta_i|\mathbf{y},\theta)\pi(\theta|\mathbf{y})d\theta \approx
 \sum_{k=1}^{K}\pi(\eta_i|\mathbf{y},\theta^k)\pi(\theta^k|\mathbf{y})\Delta_k,
 $$
-where $\Delta_k$ are weights that depends on the location of the support points.
+where $\Delta_k$ is the step length in the $\theta$-grid. We do this computation only for $\eta_{10}$ and plot the approximated marginal.
 
 ```{r}
 #Make a grid for eta
@@ -616,14 +625,14 @@ pi_eta_y <- function(theta,i=10){
 #Approximate the marginal posterior for eta_10. 
 pi_eta_10 <- pi_eta_y(theta,i=10)
 plot(eta_grid,pi_eta_10, 
-     xlab="Marginal posterior distribution for the smooth effect eta_10", ylab="")
+     xlab="Marginal posterior distribution for the smooth effect eta_10", ylab="", type="l")
 
 #Histogram for eta_10 with Gibbs
 truehist(f_gibbs[-c(1:1000),11], xlab="marginal for eta_10", xlim=c(-2,2))
 ```
 
 The first figure shows the approximation of the marginal
-posterior for the smooth efftct for $i=10$, $\pi(\eta_{10}|\mathbf{y})$ found by the inla scheme and the last figure shows the estimation obtained via Gibbs sampling. The distributions are almost identically. Since the marginal distribution $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ can be easily found, the only approximation error for $\pi(\eta_i|\mathbf{y})$ with inla comes from the numerical integration. 
+posterior for the smooth efftct for $i=10$, $\pi(\eta_{10}|\mathbf{y})$ found by the inla scheme and the last figure shows the estimation obtained via Gibbs sampling. The distributions are almost identical. Since the marginal distribution $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ can be found easily, the only approximation error for $\pi(\eta_i|\mathbf{y})$ with inla comes from the numerical integration. 
 
 ## 5) 
 Now we want to compare our results above with the results the inla() function gives. 
@@ -653,12 +662,12 @@ lines(t,m_upper, col="red")
 
 #Plot posterior marginal for the hyperparameter theta
 plot(result$marginals.hyperpar$`Precision for t`,xlim=c(0,6), xlab="", ylab = "", 
-     sub=" Posterior distribution for the hyperparameter theta")
+     sub=" Posterior distribution for the hyperparameter theta", type="l")
 
 #Plot the marginal posterior for eta_10
 plot(result$marginals.random$t$index.10, xlim=c(-2,2), xlab = "", ylab="", 
-     sub="Marginal posterior distribution for the smooth effect eta_10")
+     sub="Marginal posterior distribution for the smooth effect eta_10", type="l")
 ```
 
-The result from inla is close to identically with the result obtained with Gibbs sampling and the inla scheme. 
+The result from inla is close to identical to the result obtained with Gibbs sampling and the inla scheme. We notice that inla needs far less time to get a good approximation than the MCMC, and is thus preferred when the model allows the use of it.
 
