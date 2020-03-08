@@ -1,6 +1,6 @@
 ---
-title: "TMA4300 - Exercise 2"
-author: "Camilla og Vebjørn"
+title: "Computer Intensive Statistical Methods - Exercise 2"
+author: "Vebjørn Rekkebo, Camilla Karlsen"
 date: "`r format(Sys.time(), '%d.%m.%Y')`"
 output: pdf_document
 ---
@@ -64,9 +64,9 @@ From this we can see that $\lambda_i$ belongs to the gamma distribution with sha
 ## 4)
 We now implement a single site MCMC algorithm for $f(\theta|x)$. Since the full conditionals for $\lambda_0$, $\lambda_1$ and $\beta$ are known distributions we can just draw new values from these distributions. For $t_1$ we use a random walk proposal, namely the normal distribution with the current value of $t_1$ as mean and standard deviation $\sigma$. Here $\sigma$ is a tuning parameter we can use to configure the Markov chain. Since this is a symmetric proposal the acceptance probability for the potential new value $\tilde t_1$ is then given by 
 $$
-\min\{1,\frac{f(\tilde t_1|\lambda_0,\lambda_1,\beta,x)}{f(t_1|\lambda_0,\lambda_1,\beta,x)}\} = \min\{1, \frac{\lambda_0^{1+\tilde y_0}\lambda_1^{1+\tilde y_1}}{\lambda_0^{1+y_0}\lambda_1^{1+y_1}}\exp((\tilde t_1-t_1)(\lambda_0-\lambda_1)) \}.
+\min\left\{1,\frac{f(\tilde t_1|\lambda_0,\lambda_1,\beta,x)}{f(t_1|\lambda_0,\lambda_1,\beta,x)}\right\} = \min\left\{1, \frac{\lambda_0^{1+\tilde y_0}\lambda_1^{1+\tilde y_1}}{\lambda_0^{1+y_0}\lambda_1^{1+y_1}}\exp((\tilde t_1-t_1)(\lambda_0-\lambda_1)) \right\}.
 $$
-where all parameters parameters not marked with "~" are taken from the former step in the chain and $\tilde y_0$, $\tilde y_1$ are the updated values given $\tilde t_1$. We also need to keep sure $t_0<t_1<t_2$. We enforce this by setting $\alpha=0$ when the proposed value $\tilde t_1$ does not satisfy this constraint. As initial values we use $t_1=(t_0+t_2)/2$ and draw the rest from $unif(0,1)$. 
+where all parameters not marked with "~" are taken from the former step in the chain and $\tilde y_0$, $\tilde y_1$ are the updated values given $\tilde t_1$. We also need to keep sure $t_0<t_1<t_2$. We enforce this by setting $\alpha=0$ when the proposed value $\tilde t_1$ does not satisfy this constraint. As initial values we use $t_1=(t_0+t_2)/2$ and draw the rest from $unif(0,1)$. 
 
 ```{r}
 library(MASS) #histograms
@@ -249,7 +249,7 @@ f(\lambda_0, \lambda_1 | x, \tilde t_1, \beta) \propto \lambda_0^{\tilde y_0+1}\
 $$
 We observe that this is simply the product of the marginal full conditionals of $\lambda_0$ and $\lambda_1$. Thus they are independent and can be generated from their separate marginals $f(\lambda_i | x, \tilde t_1, \beta)$. Since we now update three values at the same time it is reasonable to just use the joint density function of all the parameters in the acceptance probability. Thus, 
 $$
-\alpha = \min\{1,\frac{f(\tilde\theta|x)}{f(\theta|x)}\},
+\alpha = \min\left\{1,\frac{f(\tilde\theta|x)}{f(\theta|x)}\right\},
 $$
 where $\tilde\theta=(\tilde t_1, \tilde\lambda_0, \tilde\lambda_1, \beta)$.
 The second block is equivalent to the first, but we are now keeping $t_1$ constant and instead proposing $\beta$ from the normal distribution with $\sigma_2$ as standard deviation. We use the same initial values as in the single site algorithm.
@@ -394,6 +394,7 @@ truehist(x.b8[-burnin,2], xlab="lambda0")
 truehist(x.b8[-burnin,3], xlab="lambda1")
 truehist(x.b8[-burnin,4], xlim=c(0,10), xlab="beta")
 ```
+
 The histograms show that the marginal posteriors for $\lambda_0$ and $\lambda_1$ are close to a Gaussian distribution, but a little bit skewed, which fits nicely to a gamma-distribution. The histogram for $\beta$ has a long tail, which fits well to the inverse-gamma distribution. Thus, it seems like the three parameters generated directly from known full conditionals have the same kind of posterior distribution. The parameter $t_1$ does not have a nice and regular posterior distribution. This is not very surprising given the nature of the problem, where many values for $t_1$ could be considered.
 
 We can estimate the posterior means from the sample and verify them by plotting against the real data as earlier.
@@ -413,7 +414,8 @@ lines(x=c(t0,t1hat2), y=c(0,(t1hat2-t0)*l0hat2), col="red", lw=2)
 lines(x=c(t1hat2,t2), y=c((t1hat2-t0)*l0hat2, (t1hat2-t0)*l0hat2+(t2-t1hat2)*l1hat2), 
       col="red", lw=2)
 ```
-From the print-out we quickly see that these values are the almost the same as those from the single site algorithm, and the two corresponding plots are naturally almost indistinguishable.
+
+From the print-out we quickly see that these values are almost the same as those from the single site algorithm, and the two corresponding plots are naturally almost indistinguishable.
 
 We also estimate $Cov[\lambda_0,\lambda_1|x]$.
 ```{r}
@@ -432,16 +434,16 @@ plot(data$y, xlab="t", ylab="y")
 ```
 
 ## 1)
-A latent Gaussian model, LGM, consists of three elements: a likelihood model, a latent Gaussian field and a vector of hyperparameters. In our model the observations $y_t$ are assumed independent and Gaussian distributed with mean $\eta_t$ and known unit varuance. Hence, the likelihood model is given as $y_t|\eta_t=\mathcal{N}(\eta_t,1); t=1,...,T$. The linear predictor $\eta_t$ is linked to a smooth effect of time $t$ as $\eta_t=f_t$. For the vector $\mathbf{f}=(f_1,\dots, f_T)$ we have the second order random walk as the prior distribution, such that
+A latent Gaussian model, LGM, consists of three elements: a likelihood model, a latent Gaussian field and a vector of hyperparameters. In our model the observations $y_t$ are assumed independent and Gaussian distributed with mean $\eta_t$ and known unit variance. Hence, the likelihood model is given as $y_t|\eta_t=\mathcal{N}(\eta_t,1); t=1,...,T$. The linear predictor $\eta_t$ is linked to a smooth effect of time $t$ as $\eta_t=f_t$. For the vector $\mathbf{f}=(f_1,\dots, f_T)$ we have the second order random walk as the prior distribution, such that
 $$
 \pi(\mathbf{f}|\theta) \propto \theta^{(T-2)/2}exp\left\{\frac{\theta}{2}\sum_{t=3}^T[f_t-2f_{t-1}+f_{t-2}]^2 \right\} = \mathcal{N}(\mathbf{0},\mathbf{Q}(\theta)^{-1}).
 $$
 Hence, the latent field $\mathbf{f}$ is a Gaussian Markov random field, GMRF, with sparse precision matrix $\mathbf{Q}(\theta)$. The precision parameter $\theta$ controls the smoothness of the vector $\mathbf{f}$ and is our hyperparameter, $\theta \sim \textrm{gamma}(1,1)$.
 
-It is possible to use INLA to estimate the parameters because our inferential interest lies in the posterior marginal for the smooth effect $\pi(\eta_t|\mathbf{y})$,$t=1,\dots,T$, and the LGM fulfill the following assumtions. Each data point $y_t$ depends only on one of the elements in the latent Gausian field $\mathbf{f}$, the linear predictor $\eta_t$. The hyperparameter vector should be small, and in our case it contains only one parameter $\theta$. The precision matrix $\mathbf{Q}(\theta)$ is sparse, and the linear predictor depends linearly on the unkown smooth function of temporal effects.  
+It is possible to use INLA to estimate the parameters because our inferential interest lies in the posterior marginal for the smooth effect $\pi(\eta_t|\mathbf{y})$, $t=1,\dots,T$, and the LGM fulfill the following assumtions. Each data point $y_t$ depends only on one of the elements in the latent Gausian field $\mathbf{f}$, the linear predictor $\eta_t$. The hyperparameter vector should be small, and in our case it contains only one parameter $\theta$. The precision matrix $\mathbf{Q}(\theta)$ is sparse, and the linear predictor depends linearly on the unkown smooth function of temporal effects.  
 
 ## 2) 
-In this exercise we implement a block Gibbs sampling algorithm for $\pi(\boldsymbol{\eta},\theta|\mathbf{y})$, where we update the parameters $\theta$ and $\eta$ iteratively by sampling from the full conditional distributions $\pi(\theta|\boldsymbol{\eta},\mathbf{y})$ and $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$. We start by finding the posterior distribution for $\theta$ and $\boldsymbol{\eta}$ given $\mathbf{y}$,
+In this exercise we implement a block Gibbs sampling algorithm for $\pi(\boldsymbol{\eta},\theta|\mathbf{y})$, where we update the parameters $\theta$ and $\boldsymbol{\eta}$ iteratively by sampling from the full conditional distributions $\pi(\theta|\boldsymbol{\eta},\mathbf{y})$ and $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$. We start by finding the posterior distribution for $\theta$ and $\boldsymbol{\eta}$ given $\mathbf{y}$,
 
 
 $$
@@ -516,6 +518,7 @@ par(mfrow=c(2,1))
 plot(f_gibbs[1:1000,1], type="l",xlab="i", ylab="theta")
 plot(f_gibbs[1:1000,2], type="l",xlab="i", ylab="eta1")
 ```
+
 To evaluate the burn-in we make trace plots for $\theta$ and $\eta_1$. We see that these look very nice and that the burn-in period is almost neglibible for both parameters. To be on the safe side, we choose to omit the first 200 steps.
 ```{r}
 #Find mean and variance from the samples of eta. 
@@ -624,15 +627,15 @@ pi_eta_y <- function(theta,i=10){
 
 #Approximate the marginal posterior for eta_10. 
 pi_eta_10 <- pi_eta_y(theta,i=10)
-plot(eta_grid,pi_eta_10, 
-     xlab="Marginal posterior distribution for the smooth effect eta_10", ylab="", type="l")
+plot(eta_grid,pi_eta_10, xlab=
+       "Marginal posterior distribution for the smooth effect eta_10", ylab="", type="l")
 
 #Histogram for eta_10 with Gibbs
 truehist(f_gibbs[-c(1:1000),11], xlab="marginal for eta_10", xlim=c(-2,2))
 ```
 
 The first figure shows the approximation of the marginal
-posterior for the smooth efftct for $i=10$, $\pi(\eta_{10}|\mathbf{y})$ found by the inla scheme and the last figure shows the estimation obtained via Gibbs sampling. The distributions are almost identical. Since the marginal distribution $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ can be found easily, the only approximation error for $\pi(\eta_i|\mathbf{y})$ with inla comes from the numerical integration. 
+posterior for the smooth effect for $i=10$, $\pi(\eta_{10}|\mathbf{y})$ found by the inla scheme and the last figure shows the estimation obtained via Gibbs sampling. The distributions are almost identical. Since the marginal distribution $\pi(\boldsymbol{\eta}|\theta,\mathbf{y})$ can be found easily, the only approximation error for $\pi(\eta_i|\mathbf{y})$ with inla comes from the numerical integration. 
 
 ## 5) 
 Now we want to compare our results above with the results the inla() function gives. 
