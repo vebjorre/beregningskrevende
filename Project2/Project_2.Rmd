@@ -315,7 +315,7 @@ mcmc_block <- function(sd, ntimes){ #x1=t1, x2=lam0, x3=lam1, x4=beta, x5=y0
 ```
 
 ## 8)
-In this block Metropolis-Hastings algorithm we have two tuning parameters, $\sigma=(\sigma_1,\sigma_2)$. We now test the algorithm with multiple different combinations of $\sigma$ and look at trace plots and autocorrelation.
+In this block Metropolis-Hastings algorithm we have two tuning parameters, $\boldsymbol \sigma=(\sigma_1,\sigma_2)$. We now test the algorithm with multiple different combinations of $\sigma$ and look at trace plots and autocorrelation.
 ```{r}
 #Define different sigmas to test
 sd.b1 <- c(1,1)
@@ -366,11 +366,11 @@ acf(x.b7[-burnin,1],main="sigma=(1,20)")
 acf(x.b8[-burnin,1],main="sigma=(5,5)")
 ```
 
-We observe very similar patterns as with the single site update. Having $\sigma_i=0.2$ is too small for both parameters and lead to very correlated steps and slow mixing. Having $\sigma_i=20$ works better, but also here too many steps get rejected. Out of the tested combinations of tuning parameters we get the best results with $\sigma=(5,1)$, where the burn-in is very short and the autocorrelation goes to zero before lag 10. This makes sense since the scale of $t_1$ is much larger than the scale of $\beta$ and using $\sigma_2=5$ in the proposal for $\beta$ is too large.
+We observe very similar patterns as with the single site update. Having $\sigma_i=0.2$ is too small for both parameters and lead to very correlated steps and slow mixing. Having $\sigma_i=20$ works better, but also here too many steps get rejected. Out of the tested combinations of tuning parameters we get the best results with $\boldsymbol \sigma=(5,1)$, where the burn-in is very short and the autocorrelation goes to zero before lag 10. This makes sense since the scale of $t_1$ is much larger than the scale of $\beta$ and using $\sigma_2=5$ in the proposal for $\beta$ is too large.
 
 It seems like it is easier to make each step less correlated and hence get better mixing with the block update. The burn-in period varies between each time the algorithm is run, but it seems like it is easier to handle bad tuning parameters if you use the block update, especially if at least one of the tuning parameters is reasonably chosen.
 
-Since $\sigma=(5,1)$ gave the best results we keep using that in the rest of the exercise. Since we have mostly compared the behaviour of $t_1$ we confirm our decision by displaying trace plots for all parameters in the winning Markov chain.
+Since $\boldsymbol \sigma=(5,1)$ gave the best results we keep using that in the rest of the exercise. Since we have mostly compared the behaviour of $t_1$ we confirm our decision by displaying trace plots for all parameters in the winning Markov chain.
 ```{r}
 par(mfrow=c(2,2))
 plot(x.b8[,1], type='l', xlab="i", ylab="t1")
