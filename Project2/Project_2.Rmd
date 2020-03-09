@@ -472,7 +472,7 @@ $$
 \pi(\boldsymbol{\eta}|\theta,\mathbf{y}) \propto \exp\left\{ -\frac{1}{2} \boldsymbol{\eta}^T(\mathbf{Q}+\mathbf{I})\boldsymbol{\eta}+\mathbf{y}^T\boldsymbol{\eta} \right\}.
 $$
 From this we can see that $\boldsymbol{\eta}|\theta,\mathbf{y}$ is Gaussian distributed with mean $\mathbf{\mu}=(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y}$ and covariance matrix $\mathbf{\Sigma}=(\mathbf{Q}+\mathbf{I})^{-1}$. We now implement the algorithm and run it with 10000 steps.
-```{r}
+```{r, fig.height=4}
 library(Matrix)
 library(matrixStats)
 library(dae)
@@ -514,7 +514,6 @@ A <- A_matrix(T)
 I=diag(1,T) #identity matrix
 f_gibbs=block_Gibbs(y,n) #sample from Gibbs
 
-par(mfrow=c(2,1))
 plot(f_gibbs[1:1000,1], type="l",xlab="i", ylab="theta")
 plot(f_gibbs[1:1000,2], type="l",xlab="i", ylab="eta1")
 ```
@@ -574,20 +573,15 @@ pi_theta <- function(theta){
   return (pi)
 } 
 
-#check the mode
-mode = optimise(pi_theta,lower = 0, upper = 10, maximum = T)$maximum
-#make a theta grid around mode
+#make a theta grid
 delta_k=0.05
 theta <- seq(0,5,delta_k)
 #normalize the function
 const = integrate(pi_theta, lower = 0, upper = 5)$value
 pi_theta_k <- pi_theta(theta)/const 
-#interpolate the points
-s <- smooth.spline(theta,pi_theta_k)
 #Plot the marginal posterior for each theta_k and the interpolation
 plot(theta,pi_theta_k, xlab="", ylab="", 
-     sub="Marginal posterior distribution for the hyperparameter theta")
-lines(s)
+     sub="Marginal posterior distribution for the hyperparameter theta", type="b")
 
 ```
 
