@@ -1,6 +1,4 @@
 library(matrixStats)
-
-setwd("C:/Users/vrekk/OneDrive/Dokumenter/NTNU/Vaar4/Beregningskrevende/Project/Project3")
 source("probAhelp.R")
 source("probAdata.R")
 
