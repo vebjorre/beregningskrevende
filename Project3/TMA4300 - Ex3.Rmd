@@ -168,22 +168,107 @@ We let $x_1,\dots,x_n$ and $y_1,\dots,y_n$ be independent random variables, wher
 ## 1)
 We start by finding the log likelihood function for the complete data $(x_i,y_i),i=1,\dots,n$.  Since $x_i$ and $y_i$ are assumed independent do we have 
 $$
-f(\mathbf{x},\mathbf{y}|\boldsymbol{\theta})=\prod_{i=1}^n f(x_i|\lambda_0)f(y_i|\lambda_1) = \prod_{i=1}^n \lambda_0\lambda_1 \exp(-\lambda_0x_i) \exp(-\lambda_1y_i)
+f(\mathbf{x},\mathbf{y}\lvert  \boldsymbol{\theta})=\prod_{i=1}^n f(x_i\lvert  \lambda_0)f(y_i\lvert  \lambda_1) = \prod_{i=1}^n \lambda_0\lambda_1 \exp(-\lambda_0x_i) \exp(-\lambda_1y_i)
 =(\lambda_0 \lambda_1)^n \exp\left(-\lambda_0 \sum_{i=1}^n x_i\right) \exp\left(-\lambda_1 \sum_{i=1}^n y_i\right).
 $$
 Thus we get the log likelihood function 
 $$
-\ln f(\mathbf{x},\mathbf{y}|\boldsymbol{\theta})=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nx_i - \lambda_1\sum_{i=1}^ny_i.
+\ln f(\mathbf{x},\mathbf{y}\lvert  \boldsymbol{\theta})=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nx_i - \lambda_1\sum_{i=1}^ny_i.
 $$
-The EM algorithm itereates between performing an expectation (E) step and a maximization (M) step. In the expecation step, a function for the expectation of the log-likelihood evaluated using the current estimate for the parameters is calculated. In the maximization step, the expected log-likelihood found in the E-step is maximazed.  
+The EM algorithm iterates between performing an expectation (E) step and a maximization (M) step. In the expecation step, a function for the expectation of the log-likelihood evaluated using the current estimate for the parameters is calculated, $Q(\boldsymbol{\theta})=Q\left(\boldsymbol{\theta}\lvert  \boldsymbol{\theta}^{(t)}\right)$. The function $Q(\boldsymbol{\theta})$ is then maximized in the M-step to find the maximum likelihood estimates of $\boldsymbol{\theta}$. These parameter-estimates are then used in the next E step. The steps are repeated until convergence. 
 
-We start with the E-step and compute the conditional expectation 
+We start by looking at the E-step and compute the conditional expectation 
 $$
-Q(\boldsymbol{\theta})=Q\left(\boldsymbol{\theta}|\boldsymbol{\theta}^{(t)}\right)
-=E\left[\ln f(\mathbf{x},\mathbf{y}|\boldsymbol{\theta})|\mathbf{z},\mathbf{u},\boldsymbol{\theta}^{(t)}\right]=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nE\left[x_i|z_i,u_i,\boldsymbol{\theta}^{(t)}\right] - \lambda_1\sum_{i=1}^nE\left[y_i|z_i,u_i,\boldsymbol{\theta}^{(t)}\right]
+Q(\boldsymbol{\theta})
+=E\left[\ln f(\mathbf{x},\mathbf{y}\lvert  \boldsymbol{\theta})\lvert  \mathbf{z},\mathbf{u},\boldsymbol{\theta}^{(t)}\right]=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nE\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right] - \lambda_1\sum_{i=1}^nE\left[y_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]
 $$. 
 
+Thus, we need to find the $E\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$ and $E\left[y_i\lvert   z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$. The conditional probabilities of $x_i$ and $y_i$ given $z_i, u_i, \lambda_0^{(t)}, \lambda_1^{(t)}$ are given as. 
+
+$$
+f(x_i \lvert z_i, u_i, \boldsymbol{\theta}^{(t)}) 
+= \begin{cases}\frac{\lambda_0^{(t)} \exp ( -\lambda_0^{(t)} x_i )}{1 - \exp (-\lambda_0^{(t)} z_i )}, \quad &u_i = 0, \\
+z_i, \quad &u_i = 1,
+\end{cases}
+$$
+$$
+f(y_i \lvert z_i, u_i, \boldsymbol{\theta}^{(t)}) 
+= \begin{cases} z_i, \quad &u_i = 0, \\
+\frac{\lambda_1^{(t)} \exp ( -\lambda_1^{(t)} y_i )}{1 - \exp (-\lambda_1^{(t)} z_i )}, \quad &u_i = 1. \\
+\end{cases}
+$$
+Then we compute the expectations as 
+$$
+E\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right] 
+= u_iz_i + (1-u_i)\int_0^{z_i} x_i \frac{\lambda_0^{(t)}\exp(-\lambda_0^{(t)}x_i)}{1-\exp(\lambda_0^{(t)}z_i)}
+= u_iz_i + (1-u_i)\left( \frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1}\right),
+$$
+$$
+E\left[y_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right] 
+= (1-u_i)z_i + u_i\int_0^{z_i} y_i \frac{\lambda_1^{(t)}\exp(-\lambda_1^{(t)}y_i)}{1-\exp(\lambda_1^{(t)}z_i)}
+= (1-u_i)z_i + u_i\left( \frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1}\right).
+$$
+By inserting the expectations above in the expression of the conditional expectation, we get
+$$
+Q(\boldsymbol{\theta})=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^n\left[u_iz_i + (1-u_i)\left( \frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1}\right)\right] - \lambda_1\sum_{i=1}^n\left[ (1-u_i)z_i + u_i\left( \frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1}\right)\right].
+$$
+
 ## 2) 
+In the M-step we want to maximize the function $Q(\boldsymbol{\theta})$, found on the E-step, to find the maximum likelihood estimates for $\boldsymbol{\theta}=(\lambda_0,\lambda_1)$. 
+
+By using
+$$
+\frac{dQ}{d\lambda_0}=0 \quad \frac{dQ}{d\lambda_1}=0,
+$$
+we find the recursion
+$$
+\lambda_0^{(t+1)} = \frac{n}{\sum_{i=1}^n\left[u_iz_i + (1-u_i)\left( \frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1}\right)\right]},
+$$
+$$
+\lambda_1^{(t+1)} = \frac{n}{\sum_{i=1}^n\left[ (1-u_i)z_i + u_i\left( \frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1}\right)\right]}.
+$$
+
+We have implemented the recursion below. 
+
+```{r}
+z <- read.table("https://www.math.ntnu.no/emner/TMA4300/2020v/Exercise/ex3-additionalFiles/z.txt")[,1]
+u <- read.table("https://www.math.ntnu.no/emner/TMA4300/2020v/Exercise/ex3-additionalFiles/u.txt")[,1]
+n <- length(u)
+ntimes <- 50
+
+
+recursion <- function(lam){
+  lambda_0 <- lam[1]
+  lambda_1 <- lam[2]
+  sum_0 <- u%*%z + (1-u)%*%(1/lambda_0-z/(exp(lambda_0*z)-1))
+  sum_1 <- (1-u)%*%z + u%*%(1/lambda_1-z/(exp(lambda_1*z)-1))
+  lambda_0 <- n/(sum_0)
+  lambda_1 <- n/(sum_1)
+  return(cbind(lambda_0,lambda_1))
+}
+
+lambda <- matrix(0,nrow=ntimes,ncol=2)
+lambda[1,] <- cbind(0.001,0.001)
+for (i in 2:ntimes){
+  lambda[i,] <- recursion(lambda[i-1,])
+}
+
+#the maximum likelihood estimates for (lambda_0,lambda_1)
+lambda_mle <- lambda[ntimes,]
+
+#plot lambda as a function of steps
+plot(1:ntimes,lambda[,1],ylim=c(0,10))
+lines(lambda[,2])
+
+#Convergence plot
+#find difference in each update for lambda_0 and lambda_1
+diff <- diff(lambda) 
+#find the norm of the update
+norm <- sqrt(diff[,1]+diff[,2]) 
+#plot the norm as a function of steps
+plot(1:(ntimes-1),norm)
+```
+`r lambda_mle`
 
 ## 3) 
 
