@@ -1,0 +1,12 @@
+---
+title: "Computer Intensive Statistical Methods - Exercise 3"
+author: "Vebjørn Rekkebo, Camilla Karlsen"
+date: "`r format(Sys.time(), '%d.%m.%Y')`"
+output: html_document
+---
+
+# Problem A:  
+
+# Problem B: 
+
+# Problem C:
