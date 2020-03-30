@@ -6,56 +6,80 @@ output: html_document
 ---
 
 # Problem A: Comparing $AR(2)$ parameter estimators using resampling of residuals
-
-## 1) 
 ```{r}
-library(matrixStats)
+#Fetch data
 source("probAhelp.R")
 source("probAdata.R")
 ```
+In this exercise we analyse a dataset containing a sequence of length T=100 of a non-Gaussian time-series. We consider an AR(2) model which is specified by the relation
+$$
+  x_t = \beta_1x_{t-1} + \beta_2x_{t-2} + e_t,
+$$
+where $e_t$ are iid random variables with zero mean and constant variance. The least sum of squared residuals (LS) and least sum of absolute residuals (LA) are obtained by minimising the following loss functions with respect to $\beta$:
+$$
+Q_{LS}(\boldsymbol{x}) = \sum_{t=3}^T (x_t - \beta_1x_{t-1} - \beta_2x_{t-2})^2
+$$
+$$
+Q_{LA}(\boldsymbol{x}) = \sum_{t=3}^T |x_t - \beta_1x_{t-1} - \beta_2x_{t-2}|.
+$$
+We denote the minimisers by $\hat{\boldsymbol{\beta}}_{LS}$ and $\hat{\boldsymbol{\beta}}_{LA}$, with corresponding residuals $\hat{e}_t=x_t - \hat\beta_1x_{t-1} - \hat\beta_2x_{t-2}$ for $t=3,\dots,T$. We let $\bar{e}_t$ denote the mean of the residuals and center them by defining $\epsilon_t=\hat e_t-\bar{e}_t$.
 
 ```{r}
 x0 <- data3A$x
-n <- length(x0)
+T <- length(x0)
+#Compute estimates for beta
 betahat <- ARp.beta.est(x0,2)
+#Find the corresponding residuals
 res_LS <- ARp.resid(x0,betahat$LS)
 res_LA <- ARp.resid(x0,betahat$LA)
 ```
+## 1) 
+We now generate $B=1500$ bootstrap samples of the residuals, each containing $T$ elements randomly picked from $\hat{\boldsymbol{\epsilon}}$ with replacement. From the new residuals and $\hat{\boldsymbol{\beta}}$ we resample the time-series once for each sample. Here we use initial values $x_{k}$ and $x_{k+1}$ where $k$ is chosen randomly from the set $\{1,2,\dots,T-1\}$. 
 
 ```{r}
 B <- 1500
 n_res <- length(res_LS)
-#Bootstrap x for LS
-xb_LS <- matrix(NA,n,B)
+#Bootstrap x from LS residuals
+xb_LS <- matrix(NA,T,B)
 for (b in 1:B){
   res <- sample(res_LS,n_res,replace=TRUE)
   x <- ARp.filter(x0[rep(sample(99,1),2)+c(0,1)],betahat$LS,res)
   xb_LS[,b] <- x
 }
 
-#Bootstrap x for LA
-xb_LA <- matrix(NA,n,B)
+#Bootstrap x from LA residuals
+xb_LA <- matrix(NA,T,B)
 for (b in 1:B){
   res <- sample(res_LA,n_res,replace=TRUE)
   x <- ARp.filter(x0[rep(sample(99,1),2)+c(0,1)],betahat$LA,res)
   xb_LA[,b] <- x
 }
-
+```
+From the new time-series samples we now estimate $B$ new coeffients $\hat{\boldsymbol{\beta}}_{b}$, one for each time-series.
+```{r}
 #Compute beta_LS from bootstrap sample
 betahatb_LS <- matrix(NA,2,B)
 for (b in 1:B){
   betahatb_LS[,b] <- ARp.beta.est(xb_LS[,b],2)$LS
 }
-#Estimate variance of beta_LS
-var_beta_LS <- rowVars(betahatb_LS)
-bias_beta_LS <- rowMeans(betahatb_LS) - betahat$LS
-
 #Compute beta_LA from bootstrap sample
 betahatb_LA <- matrix(NA,2,B)
 for (b in 1:B){
   betahatb_LA[,b] <- ARp.beta.est(xb_LA[,b],2)$LA
 }
-#Estimate variance of beta_LA
+```
+With a sample of coeffients we can easily estimate the variance and bias of both values for $\hat{\boldsymbol{\beta}}$. The variance is given by
+$$
+\text{Var}\{\hat{\boldsymbol{\beta}}\} = \frac{1}{B-1}\sum_{b=1}^B (\hat{\boldsymbol{\beta}}-\bar{\boldsymbol{\beta}})^2
+$$
+where $\bar{\boldsymbol{\beta}}=\sum_{b=1}^B \hat{\boldsymbol{\beta_b}}$ is the average of over the bootstrap sample. The bias is given by...
+```{r}
+library(matrixStats)
+#Estimate variance and bias of beta_LS
+var_beta_LS <- rowVars(betahatb_LS)
+bias_beta_LS <- rowMeans(betahatb_LS) - betahat$LS
+
+#Estimate variance and bias of beta_LA
 var_beta_LA <- rowVars(betahatb_LA)
 bias_beta_LA <- rowMeans(betahatb_LA) - betahat$LA
 ```
