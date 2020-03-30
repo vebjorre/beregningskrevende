@@ -68,21 +68,26 @@ for (b in 1:B){
   betahatb_LA[,b] <- ARp.beta.est(xb_LA[,b],2)$LA
 }
 ```
-With a sample of coeffients we can easily estimate the variance and bias of both values for $\hat{\boldsymbol{\beta}}$. The variance is given by
+With a sample of coeffients we can easily estimate the variance and bias of both values for $\hat{\boldsymbol{\beta}}$. The variance is estimated by the formula
 $$
-\text{Var}\{\hat{\boldsymbol{\beta}}\} = \frac{1}{B-1}\sum_{b=1}^B (\hat{\boldsymbol{\beta}}-\bar{\boldsymbol{\beta}})^2
+\widehat{\text{Var}(\hat{\boldsymbol{\beta}})} = \frac{1}{B-1}\sum_{b=1}^B (\hat{\boldsymbol{\beta}}-\bar{\boldsymbol{\beta}})^2
 $$
-where $\bar{\boldsymbol{\beta}}=\sum_{b=1}^B \hat{\boldsymbol{\beta_b}}$ is the average of over the bootstrap sample. The bias is given by...
+where $\bar{\boldsymbol{\beta}}=\sum_{b=1}^B \hat{\boldsymbol{\beta_b}}$ is the average of over the bootstrap sample. To estimate the bias we apply the plug-in principle to get the formula 
+$$
+\widehat{\text{bias}(\hat{\boldsymbol{\beta}})} = \bar{\boldsymbol{\beta}}-\hat{\boldsymbol{\beta}}.
+$$
 ```{r}
 library(matrixStats)
 #Estimate variance and bias of beta_LS
-var_beta_LS <- rowVars(betahatb_LS)
-bias_beta_LS <- rowMeans(betahatb_LS) - betahat$LS
-
-#Estimate variance and bias of beta_LA
-var_beta_LA <- rowVars(betahatb_LA)
-bias_beta_LA <- rowMeans(betahatb_LA) - betahat$LA
+rowVars(betahatb_LS)
+rowMeans(betahatb_LS) - betahat$LS
 ```
+```{r}
+#Estimate variance and bias of beta_LA
+rowVars(betahatb_LA)
+rowMeans(betahatb_LA) - betahat$LA
+```
+We observe that the estimates for both the variance and bias are much smaller for $\hat{\boldsymbol{\beta}}_{LA}$ than for $\hat{\boldsymbol{\beta}}_{LS}$. This shows that the LS estimator is not optimal for this problem.
 
 ## 2) 
 ```{r}
@@ -100,8 +105,8 @@ for (b in 1:B){
 
 ##USIKKER på res her!
 #Simulate x101 for each residual value
-x101_LS <- betahat$LS[1]*x0[n] + betahat$LS[2]*x0[n-1] + as.vector(resb_LS)
-x101_LA <- betahat$LA[1]*x0[n] + betahat$LA[2]*x0[n-1] + as.vector(resb_LA)
+x101_LS <- betahat$LS[1]*x0[T] + betahat$LS[2]*x0[T-1] + as.vector(resb_LS)
+x101_LA <- betahat$LA[1]*x0[T] + betahat$LA[2]*x0[T-1] + as.vector(resb_LA)
 #Prediction intervals based on quantiles of simulated x101
 pred_LS <- c(quantile(x101_LS,0.025), quantile(x101_LS,.975))
 pred_LA <- c(quantile(x101_LA,0.025), quantile(x101_LA,.975))
