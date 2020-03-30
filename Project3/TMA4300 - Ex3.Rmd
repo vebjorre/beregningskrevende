@@ -85,12 +85,43 @@ pred_LA <- c(quantile(x101_LA,0.025), quantile(x101_LA,.975))
 ```
 
 # Problem B: Permutation test
+```{r}
+#Fetch data
+bilirubin <- read.table("bilirubin.txt",header=T)
+```
+## 1)
+```{r}
+#Boxplot
+boxplot(log(meas)~pers,data=bilirubin,xlab="Person",ylab="log(Concentration)")
+```
 
-## 1) 
-
+```{r}
+#Fit linear model
+fit <- lm(log(meas)~pers,data=bilirubin)
+#Find F-value
+Fval <- summary(fit)$fstatistic[1]
+```
 ## 2)
-
+```{r}
+#Function to compute F-value of random permutation.
+#NB! y0=log(meas)
+permTest <- function(x0,y0){
+  n <- length(x0)
+  x <- sample(x0,n)
+  return(as.numeric(summary(lm(y0~x))$fstatistic[1]))
+}
+```
 ## 3)
+```{r}
+#Sample 999 values of F
+n_perms <- 999
+F_sample <- rep(NA,n_perms)
+for (i in 1:n_perms){
+  F_sample[i] <- permTest(bilirubin$pers,log(bilirubin$meas))
+}
+#Compute p-value using the sample of F-values
+pval <- sum(F_sample > Fval)/n_perms
+```
 
 # Problem C: The EM-algorithm and bootstrapping 
 
