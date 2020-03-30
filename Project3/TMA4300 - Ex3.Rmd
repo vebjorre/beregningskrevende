@@ -5,8 +5,44 @@ date: "`r format(Sys.time(), '%d.%m.%Y')`"
 output: html_document
 ---
 
-# Problem A:  
+# Problem A: Comparing $AR(2)$ parameter estimators using resampling of residuals
 
-# Problem B: 
+## 1) 
 
-# Problem C:
+## 2) 
+
+# Problem B: Permutation test
+
+## 1) 
+
+## 2)
+
+## 3)
+
+# Problem C: The EM-algorithm and bootstrapping 
+
+We let $x_1,\dots,x_n$ and $y_1,\dots,y_n$ be independent random variables, where the $x_i$'s and $y_i$'s have an exponential distribution with intensity respectively $\lambda_0$ and $\lambda_1$. We assume that we do not observe $x_1,\dots,x_n$ and $y_1,\dots,y_n$ directly, but instead observe $z_i=\max(x_i,y_i)$ and $u_i=I(x_i\geq y_i)$ for $i=1,\dots,n$, where $I(\cdot)$ is the indicator function. Based on the observed $(z_i,u_i),i=1,\dots,n$ we will us the EM algorithm to find the maximum likelhood estimates for $\boldsymbol{\theta} = (\lambda_0,\lambda_1)$.
+
+## 1)
+We start by finding the log likelihood function for the complete data $(x_i,y_i),i=1,\dots,n$.  Since $x_i$ and $y_i$ are assumed independent do we have 
+$$
+f(\mathbf{x},\mathbf{y}|\boldsymbol{\theta})=\prod_{i=1}^n f(x_i|\lambda_0)f(y_i|\lambda_1) = \prod_{i=1}^n \lambda_0\lambda_1 \exp(-\lambda_0x_i) \exp(-\lambda_1y_i)
+=(\lambda_0 \lambda_1)^n \exp\left(-\lambda_0 \sum_{i=1}^n x_i\right) \exp\left(-\lambda_1 \sum_{i=1}^n y_i\right).
+$$
+Thus we get the log likelihood function 
+$$
+\ln f(\mathbf{x},\mathbf{y}|\boldsymbol{\theta})=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nx_i - \lambda_1\sum_{i=1}^ny_i.
+$$
+The EM algorithm itereates between performing an expectation (E) step and a maximization (M) step. In the expecation step, a function for the expectation of the log-likelihood evaluated using the current estimate for the parameters is calculated. In the maximization step, the expected log-likelihood found in the E-step is maximazed.  
+
+We start with the E-step and compute the conditional expectation 
+$$
+Q(\boldsymbol{\theta})=Q\left(\boldsymbol{\theta}|\boldsymbol{\theta}^{(t)}\right)
+=E\left[\ln f(\mathbf{x},\mathbf{y}|\boldsymbol{\theta})|\mathbf{z},\mathbf{u},\boldsymbol{\theta}^{(t)}\right]=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nE\left[x_i|z_i,u_i,\boldsymbol{\theta}^{(t)}\right] - \lambda_1\sum_{i=1}^nE\left[y_i|z_i,u_i,\boldsymbol{\theta}^{(t)}\right]
+$$. 
+
+## 2) 
+
+## 3) 
+
+## 4) 
