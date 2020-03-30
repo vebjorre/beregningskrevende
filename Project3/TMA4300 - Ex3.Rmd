@@ -11,7 +11,7 @@ output: html_document
 source("probAhelp.R")
 source("probAdata.R")
 ```
-In this exercise we analyse a dataset containing a sequence of length T=100 of a non-Gaussian time-series. We consider an AR(2) model which is specified by the relation
+In this exercise we analyse a dataset containing a sequence of length T=100 of a non-Gaussian time series. We consider an AR(2) model which is specified by the relation
 $$
   x_t = \beta_1x_{t-1} + \beta_2x_{t-2} + e_t,
 $$
@@ -22,7 +22,7 @@ $$
 $$
 Q_{LA}(\boldsymbol{x}) = \sum_{t=3}^T |x_t - \beta_1x_{t-1} - \beta_2x_{t-2}|.
 $$
-We denote the minimisers by $\hat{\boldsymbol{\beta}}_{LS}$ and $\hat{\boldsymbol{\beta}}_{LA}$, with corresponding residuals $\hat{e}_t=x_t - \hat\beta_1x_{t-1} - \hat\beta_2x_{t-2}$ for $t=3,\dots,T$. We let $\bar{e}_t$ denote the mean of the residuals and center them by defining $\epsilon_t=\hat e_t-\bar{e}_t$.
+We denote the minimisers by $\hat{\boldsymbol{\beta}}_{LS}$ and $\hat{\boldsymbol{\beta}}_{LA}$, with corresponding residuals $\hat{e}_t=x_t - \hat\beta_1x_{t-1} - \hat\beta_2x_{t-2}$ for $t=3,\dots,T$. We let $\bar{e}_t$ denote the mean of the residuals and center them by defining $\epsilon_t=\hat e_t-\bar{e}_t$. All of the computations and estimations in this problem are done using both LS and LA residuals.
 
 ```{r}
 x0 <- data3A$x
@@ -55,14 +55,14 @@ for (b in 1:B){
   xb_LA[,b] <- x
 }
 ```
-From the new time-series samples we now estimate $B$ new coeffients $\hat{\boldsymbol{\beta}}_{b}$, one for each time-series.
+From the new time series samples we now estimate $B$ new coeffients $\hat{\boldsymbol{\beta}}_{b}$, one for each time series.
 ```{r}
-#Compute beta_LS from bootstrap sample
+#Compute beta_LS from bootstrapped time series
 betahatb_LS <- matrix(NA,2,B)
 for (b in 1:B){
   betahatb_LS[,b] <- ARp.beta.est(xb_LS[,b],2)$LS
 }
-#Compute beta_LA from bootstrap sample
+#Compute beta_LA from bootstrapped time series
 betahatb_LA <- matrix(NA,2,B)
 for (b in 1:B){
   betahatb_LA[,b] <- ARp.beta.est(xb_LA[,b],2)$LA
@@ -76,6 +76,7 @@ where $\bar{\boldsymbol{\beta}}=\sum_{b=1}^B \hat{\boldsymbol{\beta_b}}$ is the 
 $$
 \widehat{\text{bias}(\hat{\boldsymbol{\beta}})} = \bar{\boldsymbol{\beta}}-\hat{\boldsymbol{\beta}}.
 $$
+
 ```{r}
 library(matrixStats)
 #Estimate variance and bias of beta_LS
@@ -90,6 +91,7 @@ rowMeans(betahatb_LA) - betahat$LA
 We observe that the estimates for both the variance and bias are much smaller for $\hat{\boldsymbol{\beta}}_{LA}$ than for $\hat{\boldsymbol{\beta}}_{LS}$. This shows that the LS estimator is not optimal for this problem.
 
 ## 2) 
+Next we want to compute a 95% prediction interval for $x_{101}$ based on both estimators. We start by estimating the residuals corresponding to the bootstrapped time series and parameter estimates from part 1).
 ```{r}
 #########Usikker her!
 #Estimate LS residuals from bootstap samples of x and beta
@@ -102,16 +104,23 @@ resb_LA <- matrix(NA,n_res,B)
 for (b in 1:B){
   resb_LA[,b] <- ARp.resid(xb_LA[,b],betahatb_LA[,b])
 }
-
-##USIKKER på res her!
+```
+This results in $B\times (T-2)=147000$ residual values in total. Since the residuals are iid we can use all of them in a sample for $\epsilon_{101}$. Thus, using the formula 
+$$
+x_{101} = \hat\beta_1x_{100} + \hat\beta_2x_{99} + \hat\epsilon_t,
+$$
+we get 147000 simulations for $x_{101}$. From this sample we find the quantiles corresponding to a 95% prediction interval.
+```{r}
 #Simulate x101 for each residual value
 x101_LS <- betahat$LS[1]*x0[T] + betahat$LS[2]*x0[T-1] + as.vector(resb_LS)
 x101_LA <- betahat$LA[1]*x0[T] + betahat$LA[2]*x0[T-1] + as.vector(resb_LA)
-#Prediction intervals based on quantiles of simulated x101
-pred_LS <- c(quantile(x101_LS,0.025), quantile(x101_LS,.975))
-pred_LA <- c(quantile(x101_LA,0.025), quantile(x101_LA,.975))
-
+#95% prediction intervals based on quantiles of simulated x101
+#LS:
+c(quantile(x101_LS,0.025), quantile(x101_LS,.975))
+#LA:
+c(quantile(x101_LA,0.025), quantile(x101_LA,.975))
 ```
+
 
 # Problem B: Permutation test
 ```{r}
