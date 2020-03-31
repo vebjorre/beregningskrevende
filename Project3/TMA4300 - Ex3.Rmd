@@ -93,7 +93,6 @@ We observe that the estimates for both the variance and bias are much smaller fo
 ## 2) 
 Next we want to compute a 95% prediction interval for $x_{101}$ based on both estimators. We start by estimating the residuals corresponding to the bootstrapped time series and parameter estimates from part 1).
 ```{r}
-#########Usikker her!
 #Estimate LS residuals from bootstap samples of x and beta
 resb_LS <- matrix(NA,n_res,B)
 for (b in 1:B){
@@ -123,23 +122,36 @@ c(quantile(x101_LA,0.025), quantile(x101_LA,.975))
 
 
 # Problem B: Permutation test
+
+In this problem we consider measurements of the concentration of bilirubin in blood samples $\mathbf{Y}$ taken from three different men. The total number of measurements is $n=29$, distributed on $n_1=11$, $n_2=10$, $n_3=8$.
+
 ```{r}
 #Fetch data
 bilirubin <- read.table("bilirubin.txt",header=T)
 ```
 ## 1)
+We first make a boxplot of $\log(Y_{i})$, $i=1,2,3$, to compare each person.
 ```{r}
 #Boxplot
 boxplot(log(meas)~pers,data=bilirubin,xlab="Person",ylab="log(Concentration)")
 ```
+We see that person 1 and person 2 have similar median values, but person 1 has much larger variability in his values. Person 3 has much larger median value than the to others as well as high variability in measurements.
 
+We fit the linear regression model 
+$$
+\log(Y_{ij})=\beta_i+\epsilon_{ij}, \text{ with      } i=1,2,3 \text{ and } j=1,2,\ldots,n_i
+$$
+where $\epsilon_{ij}\sim\mathcal{N}(0,\sigma^2)$ are iid. The F-test tests the hypothesis $\beta_1=\beta_2=\beta_3$.
 ```{r}
 #Fit linear model
 fit <- lm(log(meas)~pers,data=bilirubin)
 #Find F-value
 Fval <- summary(fit)$fstatistic[1]
 ```
+We get $F=3.67$ which corresponds to the p-value 0.039. Thus we reject the null hypothesis with significance level 0.05 and conclude that the three men have different concentrations of bilirubin in their blood.
+
 ## 2)
+We now write a function `permTest` to perform a permutation test. The function shuffles the measurements between the three men and fits a similar linear regression model as in part 1), and returns the corresonding F-statistic.
 ```{r}
 #Function to compute F-value of random permutation.
 #NB! y0=log(meas)
@@ -150,7 +162,9 @@ permTest <- function(x0,y0){
 }
 ```
 ## 3)
+To perform the permutation test we make a sample of size 999 of the F-statistic. We then compute the p-value as $\frac{1}{999}\sum_{i=1}^{999}I(F_i>F)$ where $I$ denotes the indicator function and $F$ is the F-statistic of the first test.
 ```{r}
+set.seed(0)
 #Sample 999 values of F
 n_perms <- 999
 F_sample <- rep(NA,n_perms)
@@ -159,7 +173,9 @@ for (i in 1:n_perms){
 }
 #Compute p-value using the sample of F-values
 pval <- sum(F_sample > Fval)/n_perms
+pval
 ```
+The reported p-value is `r round(pval,3)` which is very close to the original p-value. The permutation test is a more robust test as it does not require any model assumptions. However, getting such similar results indicate that the model assumptions of the linear regression model may be satisfied as well.
 
 # Problem C: The EM-algorithm and bootstrapping 
 

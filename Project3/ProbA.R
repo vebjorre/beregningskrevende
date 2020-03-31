@@ -1,3 +1,4 @@
+# setwd("C:/Users/vrekk/OneDrive/Dokumenter/NTNU/Vaar4/Beregningskrevende/Project/Project3")
 library(matrixStats)
 source("probAhelp.R")
 source("probAdata.R")
