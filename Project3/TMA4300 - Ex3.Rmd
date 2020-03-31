@@ -6,12 +6,14 @@ output: html_document
 ---
 
 # Problem A: Comparing $AR(2)$ parameter estimators using resampling of residuals
+
+In this exercise we analyse a dataset containing a sequence of length T=100 of a non-Gaussian time series.
 ```{r}
 #Fetch data
 source("probAhelp.R")
 source("probAdata.R")
 ```
-In this exercise we analyse a dataset containing a sequence of length T=100 of a non-Gaussian time series. We consider an AR(2) model which is specified by the relation
+We consider an AR(2) model which is specified by the relation
 $$
   x_t = \beta_1x_{t-1} + \beta_2x_{t-2} + e_t,
 $$
@@ -22,7 +24,7 @@ $$
 $$
 Q_{LA}(\boldsymbol{x}) = \sum_{t=3}^T |x_t - \beta_1x_{t-1} - \beta_2x_{t-2}|.
 $$
-We denote the minimisers by $\hat{\boldsymbol{\beta}}_{LS}$ and $\hat{\boldsymbol{\beta}}_{LA}$, with corresponding residuals $\hat{e}_t=x_t - \hat\beta_1x_{t-1} - \hat\beta_2x_{t-2}$ for $t=3,\dots,T$. We let $\bar{e}_t$ denote the mean of the residuals and center them by defining $\epsilon_t=\hat e_t-\bar{e}_t$. All of the computations and estimations in this problem are done using both LS and LA residuals.
+We denote the minimisers by $\hat{\boldsymbol{\beta}}_{LS}$ and $\hat{\boldsymbol{\beta}}_{LA}$, with corresponding residuals $\hat{e}_t=x_t - \hat\beta_1x_{t-1} - \hat\beta_2x_{t-2}$ for $t=3,\dots,T$. We let $\bar{e}_t$ denote the mean of the residuals and center them by defining $\hat\epsilon_t=\hat e_t-\bar{e}_t$. All of the computations and estimations in this problem are done using both LS and LA residuals.
 
 ```{r}
 x0 <- data3A$x
@@ -34,7 +36,7 @@ res_LS <- ARp.resid(x0,betahat$LS)
 res_LA <- ARp.resid(x0,betahat$LA)
 ```
 ## 1) 
-We now generate $B=1500$ bootstrap samples of the residuals, each containing $T$ elements randomly picked from $\hat{\boldsymbol{\epsilon}}$ with replacement. From the new residuals and $\hat{\boldsymbol{\beta}}$ we resample the time-series once for each sample. Here we use initial values $x_{k}$ and $x_{k+1}$ where $k$ is chosen randomly from the set $\{1,2,\dots,T-1\}$. 
+We now generate $B=1500$ bootstrap samples of the residuals, each containing $T$ elements randomly picked from $\hat{\boldsymbol{\epsilon}}$ with replacement. From the new residuals and $\hat{\boldsymbol{\beta}}$ we resample the time series once for each sample. Here we use initial values $x_{k}$ and $x_{k+1}$ where $k$ is chosen randomly from the set $\{1,2,\dots,T-1\}$ for every new times series. 
 
 ```{r}
 B <- 1500
@@ -55,7 +57,7 @@ for (b in 1:B){
   xb_LA[,b] <- x
 }
 ```
-From the new time series samples we now estimate $B$ new coeffients $\hat{\boldsymbol{\beta}}_{b}$, one for each time series.
+From the new time series sample we now estimate $B$ new coeffients $\hat{\boldsymbol{\beta}}_{b}$, one for each time series.
 ```{r}
 #Compute beta_LS from bootstrapped time series
 betahatb_LS <- matrix(NA,2,B)
@@ -72,20 +74,25 @@ With a sample of coeffients we can easily estimate the variance and bias of both
 $$
 \widehat{\text{Var}(\hat{\boldsymbol{\beta}})} = \frac{1}{B-1}\sum_{b=1}^B (\hat{\boldsymbol{\beta}}-\bar{\boldsymbol{\beta}})^2
 $$
-where $\bar{\boldsymbol{\beta}}=\sum_{b=1}^B \hat{\boldsymbol{\beta_b}}$ is the average of over the bootstrap sample. To estimate the bias we apply the plug-in principle to get the formula 
+where $\bar{\boldsymbol{\beta}}=\sum_{b=1}^B \hat{\boldsymbol{\beta}}_b$ is the average of over the bootstrap sample. 
+To estimate the bias we apply the plug-in principle to get the expression 
 $$
 \widehat{\text{bias}(\hat{\boldsymbol{\beta}})} = \bar{\boldsymbol{\beta}}-\hat{\boldsymbol{\beta}}.
 $$
 
 ```{r}
 library(matrixStats)
-#Estimate variance and bias of beta_LS
+#LS
+#Estimated variance of beta1,beta2:
 rowVars(betahatb_LS)
+#Estimated bias of beta1,beta2:
 rowMeans(betahatb_LS) - betahat$LS
 ```
 ```{r}
-#Estimate variance and bias of beta_LA
+#LA
+#Estimated variance of beta1,beta2:
 rowVars(betahatb_LA)
+#Estimated bias of beta1,beta2:
 rowMeans(betahatb_LA) - betahat$LA
 ```
 We observe that the estimates for both the variance and bias are much smaller for $\hat{\boldsymbol{\beta}}_{LA}$ than for $\hat{\boldsymbol{\beta}}_{LS}$. This shows that the LS estimator is not optimal for this problem.
@@ -106,9 +113,9 @@ for (b in 1:B){
 ```
 This results in $B\times (T-2)=147000$ residual values in total. Since the residuals are iid we can use all of them in a sample for $\epsilon_{101}$. Thus, using the formula 
 $$
-x_{101} = \hat\beta_1x_{100} + \hat\beta_2x_{99} + \hat\epsilon_t,
+x_{101} = \hat\beta_1x_{100} + \hat\beta_2x_{99} + \epsilon_{101},
 $$
-we get 147000 simulations for $x_{101}$. From this sample we find the quantiles corresponding to a 95% prediction interval.
+we get 147000 simulated values for $x_{101}$. From this sample we find the quantiles corresponding to a 95% prediction interval.
 ```{r}
 #Simulate x101 for each residual value
 x101_LS <- betahat$LS[1]*x0[T] + betahat$LS[2]*x0[T-1] + as.vector(resb_LS)
@@ -119,7 +126,7 @@ c(quantile(x101_LS,0.025), quantile(x101_LS,.975))
 #LA:
 c(quantile(x101_LA,0.025), quantile(x101_LA,.975))
 ```
-
+The two prediction intervals are fairly similar and tell us that the change is in most steps expected to be smaller than approximately 8.
 
 # Problem B: Permutation test
 
@@ -135,7 +142,8 @@ We first make a boxplot of $\log(Y_{i})$, $i=1,2,3$, to compare each person.
 #Boxplot
 boxplot(log(meas)~pers,data=bilirubin,xlab="Person",ylab="log(Concentration)")
 ```
-We see that person 1 and person 2 have similar median values, but person 1 has much larger variability in his values. Person 3 has much larger median value than the to others as well as high variability in measurements.
+
+We see that person 1 and person 2 have similar median values, but person 1 has much larger variability in his values. Person 3 has much larger median value than the two others as well as high variability in measurements.
 
 We fit the linear regression model 
 $$
@@ -148,10 +156,10 @@ fit <- lm(log(meas)~pers,data=bilirubin)
 #Find F-value
 Fval <- summary(fit)$fstatistic[1]
 ```
-We get $F=3.67$ which corresponds to the p-value 0.039. Thus we reject the null hypothesis with significance level 0.05 and conclude that the three men have different concentrations of bilirubin in their blood.
+We get $F_0=3.67$ which corresponds to the p-value 0.039. Thus we reject the null hypothesis with significance level 0.05 and conclude that the three men have different concentrations of bilirubin in their blood.
 
 ## 2)
-We now write a function `permTest` to perform a permutation test. The function shuffles the measurements between the three men and fits a similar linear regression model as in part 1), and returns the corresonding F-statistic.
+We now write a function `permTest` to perform a permutation test. The function shuffles the measurements between the three men, then fits a similar linear regression model as in part 1), and returns the corresonding F-statistic.
 ```{r}
 #Function to compute F-value of random permutation.
 #NB! y0=log(meas)
@@ -162,7 +170,7 @@ permTest <- function(x0,y0){
 }
 ```
 ## 3)
-To perform the permutation test we make a sample of size 999 of the F-statistic. We then compute the p-value as $\frac{1}{999}\sum_{i=1}^{999}I(F_i>F)$ where $I$ denotes the indicator function and $F$ is the F-statistic of the first test.
+To perform the permutation test we make a sample of size 999 of the F-statistic. We then compute the p-value as $\frac{1}{999}\sum_{i=1}^{999}I(F_i>F_0)$ where $I$ denotes the indicator function and $F_i$ is the F-statistic corresponding to permutation $i$.
 ```{r}
 set.seed(0)
 #Sample 999 values of F
@@ -175,7 +183,7 @@ for (i in 1:n_perms){
 pval <- sum(F_sample > Fval)/n_perms
 pval
 ```
-The reported p-value is `r round(pval,3)` which is very close to the original p-value. The permutation test is a more robust test as it does not require any model assumptions. However, getting such similar results indicate that the model assumptions of the linear regression model may be satisfied as well.
+The reported p-value is `r round(pval,4)` which is very close to the original p-value. The permutation test is a more robust test as it does not require any model assumptions. However, getting such similar results indicate that the model assumptions of the linear regression model may be satisfied as well.
 
 # Problem C: The EM-algorithm and bootstrapping 
 
