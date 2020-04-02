@@ -111,15 +111,15 @@ for (b in 1:B){
   resb_LA[,b] <- ARp.resid(xb_LA[,b],betahatb_LA[,b])
 }
 ```
-This results in $B\times (T-2)=147000$ residual values in total. Since the residuals are iid we can use all of them in a sample for $\epsilon_{101}$. Thus, using the formula 
+This results in $B\times (T-2)=147000$ residual values in total. Since the residuals are iid we can use all of them in a sample for $\epsilon_{101}$. Thus, we can simulate a sample for $x_{101}$ using the relation
 $$
 x_{101} = \hat\beta_1x_{100} + \hat\beta_2x_{99} + \epsilon_{101},
 $$
-we get 147000 simulated values for $x_{101}$. From this sample we find the quantiles corresponding to a 95% prediction interval.
+with $\hat{\boldsymbol{\beta}}$ being the bootstrapped parameters and $\epsilon_{101}$ being drawn randomly from the new residual sample. This way the sample for $x_{101}$ will reflect our lack of knowledge about both the parameter values and the residual distribution. From this sample we find the quantiles corresponding to a 95% prediction interval for $x_{101}$.
 ```{r}
 #Simulate x101 for each residual value
-x101_LS <- betahat$LS[1]*x0[T] + betahat$LS[2]*x0[T-1] + as.vector(resb_LS)
-x101_LA <- betahat$LA[1]*x0[T] + betahat$LA[2]*x0[T-1] + as.vector(resb_LA)
+x101_LS <- betahatb_LS[1,]*x0[T] + betahatb_LS[2,]*x0[T-1] + sample(resb_LS,B,replace=T)
+x101_LA <- betahatb_LA[1,]*x0[T] + betahatb_LA[2,]*x0[T-1] + sample(resb_LA,B,replace=T)
 #95% prediction intervals based on quantiles of simulated x101
 #LS:
 c(quantile(x101_LS,0.025), quantile(x101_LS,.975))
