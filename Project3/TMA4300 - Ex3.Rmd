@@ -283,7 +283,7 @@ lambda_mle <- lambda[ntimes,]
 cat("lambda_mle: ",lambda_mle)
 
 #plot lambda as a function of steps
-plot(1:ntimes,lambda[,1],type="l", col="red",ylim=c(0,10),ylab="lambda",xlab="number of iterations")
+plot(1:ntimes,lambda[,1],type="l", col="red",ylim=c(0,10),ylab="lambda",xlab="n")
 lines(lambda[,2])
 ```
 
@@ -294,9 +294,9 @@ From the plot can we see that the algorithm converges after a few iterations, an
 #find difference in each update for lambda_0 and lambda_1
 diff <- diff(lambda) 
 #find the norm of the update
-norm <- sqrt(diff[,1]+diff[,2]) 
+norm <- sqrt(diff[,1]+diff[,2])
 #plot the norm as a function of steps
-plot(1:(ntimes-1),norm, type="l", xlab="number of iterations")
+plot(1:(ntimes-1),norm, type="l", xlab="n",ylab="||theta(t)-theta(t-1)||")
 ```
 
 The convergence plot shows the same as mentioned above, the algorithm converges very quickly. 
@@ -308,7 +308,7 @@ $$
     & \textit{for b in } 1,2,\dots,B:\\
     & \quad z_b^* \leftarrow \textit{sample with replacement from z}\\
     & \quad u_b^* \leftarrow \textit{sample with replacement from u}\\
-    & \quad \textit{compute } \boldsymbol{\theta}^*_b=(\lambda_{0,b}^*,\lambda_{1,b}^*) \textit{by running the EM-algorithm with }z_b^* \textit{and } u_b^*\\
+    & \quad \textit{compute } \boldsymbol{\theta}^*_b=(\lambda_{0,b}^*,\lambda_{1,b}^*) \textit{ by running the EM-algorithm with }z_b^* \textit{and } u_b^*\\
     & \quad \boldsymbol{\theta}^*_b[b]=\boldsymbol{\theta}^*_b
 \end{align*}
 $$
@@ -318,11 +318,11 @@ B=10000
 
 EM<-function(z,u){
   norm <- 1
-  lambda <- runif(2)
+  lambda <- lambda_mle
   while (norm >1e-12){
     lambda_old <- lambda
     lambda <- recursion(lambda,z,u)
-    norm <- sum((lambda-lambda_old)^2)
+    norm <- sqrt(sum((lambda-lambda_old)^2))
   }
   return (lambda)
 }
@@ -334,19 +334,31 @@ for (b in 1:B){
   lambda_b[b,] <- EM(z_b,u_b)
 }
 
-#plot lambda_b as a function of steps
-plot(1:B,lambda_b[,1],type="l", col="red",ylim=c(0,10),ylab="lambda_b",xlab="number of iterations")
-lines(lambda_b[,2])
+#Plot historgrams for the bootstrap samples
+library(MASS)
+par(mfrow=c(1,2))
+truehist(lambda_b[,1],xlab="lambda_0")
+abline(v=lambda_mle[1],col="red")
+truehist(lambda_b[,2],xlab="lambda_1")
+abline(v=lambda_mle[2],col="red")
 
+#Find mean, sd, bias and corr
 mean_lambda <- colMeans(lambda_b)
-sd_lambda <- sqrt(1/(B-1)*colSums((lambda_b-mean_lambda)^2)) 
+sd_lambda <- sqrt(diag(cov(lambda_b)))
 bias <- mean_lambda - lambda_mle
 corr <- cor(lambda_b)[1, 2] 
 cat(" Mean: ",mean_lambda,"\n","Standard deviation: ",sd_lambda,"\n","Bias: ",bias,"\n","Corr: ",corr,"\n")
 ```
-We observe that the mean $(\bar{\lambda}_0^*, \bar{\lambda}_1^*)=(3.91,6.49)$ of the bootstrap samples is a bit different from the maximum likelihood estimates $\lambda_{0}}, \lambda_{1}=(3.47,9.35)$, espesially for $\lambda_1$.
-MLE eller bias corrected estimates? MLE siden variancen er større i bootstrap. 
-As expected, since $x_i$ and $y_i$ are independent random variables, is the correlation $\text{Corr}[\hat{\lambda}_0,\hat{\lambda}_1]$ very small.
 
+We observe that the mean $(\bar{\lambda}_0^*, \bar{\lambda}_1^*)=(3.91,6.49)$ of the bootstrap samples does not correspond well with the maximum likelihood estimates $(\lambda_{0}, \lambda_{1})=(3.47,9.35)$, and that the whole distribution looks skewed. This corresponds to the large bias in the print out , and it may therefore be appropriate to use the bias correctd estimates for $\lambda_0$ and $\lambda_1$. 
+As expected, since $x_i$ and $y_i$ are independent random variables,is the correlation $\text{Corr}[\hat{\lambda}_0,\hat{\lambda}_1]$ very small. 
+```{r}
+#Bias corrected estimate
+bias_corrected_lambda <- mean_lambda - bias
+cat("Bias corrected estimate: ", bias_corrected_lambda)
+```
+We see that the bias corrected estimates for $\lambda_0$ and $\lambda_1$ correspond well with the maximum likelihood estimates $(\lambda_{0}, \lambda_{1})=(3.47,9.35)$. In this case, therefore, it will not matter which one we choose to use. 
 
 ## 4) 
+
+In this exercise we want to try to optimize the likelihood directly instead of using the EM-algorithm. First we need to find an analytical formula for $f_{Z_i,U_i}(z_i,u_i|\lambda_0,\lambda_1)$ and then try to find analytical formulas for the maximum likelihood estimators $\hat{\lambda}_0$ and $\hat{\lambda}_1$. 
