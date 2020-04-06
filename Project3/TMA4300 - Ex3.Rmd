@@ -287,7 +287,7 @@ plot(1:ntimes,lambda[,1],type="l", col="red",ylim=c(0,10),ylab="lambda",xlab="n"
 lines(lambda[,2])
 ```
 
-From the plot can we see that the algorithm converges after a few iterations, and that the maximum likelihood estimates for $(\lambda_0,\lambda_1)$ is $(3.47,9.35)$. Now we want to visualise the convergence of the algorithm with the norm $||(\lambda_0^{(t)}, \lambda_1^{(t)}) - (\lambda_0^{(t-1)}, \lambda_1^{(t-1)}) ||$.
+From the plot can we see that the algorithm converges after a few iterations, and that the maximum likelihood estimates for $(\lambda_0,\lambda_1)$ is $(3.4657,9.3532)$. Now we want to visualise the convergence of the algorithm with the norm $||(\lambda_0^{(t)}, \lambda_1^{(t)}) - (\lambda_0^{(t-1)}, \lambda_1^{(t-1)}) ||$.
 
 ```{r}
 #Convergence plot
@@ -329,8 +329,9 @@ EM<-function(z,u){
 
 lambda_b <- matrix(0,nrow=B,ncol=2)
 for (b in 1:B){
-  z_b <- sample(z,replace=T)
-  u_b <- sample(u,replace=T)
+  i <- sample(1:n,replace=T) #u_i and z_i is dependent 
+  z_b <- z[i]
+  u_b <- u[i]
   lambda_b[b,] <- EM(z_b,u_b)
 }
 
@@ -350,15 +351,83 @@ corr <- cor(lambda_b)[1, 2]
 cat(" Mean: ",mean_lambda,"\n","Standard deviation: ",sd_lambda,"\n","Bias: ",bias,"\n","Corr: ",corr,"\n")
 ```
 
-We observe that the mean $(\bar{\lambda}_0^*, \bar{\lambda}_1^*)=(3.91,6.49)$ of the bootstrap samples does not correspond well with the maximum likelihood estimates $(\lambda_{0}, \lambda_{1})=(3.47,9.35)$, and that the whole distribution looks skewed. This corresponds to the large bias in the print out , and it may therefore be appropriate to use the bias correctd estimates for $\lambda_0$ and $\lambda_1$. 
-As expected, since $x_i$ and $y_i$ are independent random variables,is the correlation $\text{Corr}[\hat{\lambda}_0,\hat{\lambda}_1]$ very small. 
+From the figure and the print out we see that the mean $(\hat{\lambda}_0^*, \hat{\lambda}_1^*)=(3.4848,9.4221)$ of the bootstrap samples is a bit different from the maximum likelihood estimates $(\lambda_0,\lambda_1)=(3.4657,9.3532)$. Both the standard deviation and bias is significant, but the standard deviation is a bit larger and thus may affects the error in the estimate most. Because of this, we prefer the maximum likelihoods instead og the bias corrected estimates for $\lambda_0$ and $\lambda_1$. As expected, since $x_i$ and $y_i$ are independent random variables,is the correlation $\text{Corr}[\hat{\lambda}_0,\hat{\lambda}_1]$ very small. 
+
 ```{r}
 #Bias corrected estimate
 bias_corrected_lambda <- mean_lambda - bias
 cat("Bias corrected estimate: ", bias_corrected_lambda)
 ```
-We see that the bias corrected estimates for $\lambda_0$ and $\lambda_1$ correspond well with the maximum likelihood estimates $(\lambda_{0}, \lambda_{1})=(3.47,9.35)$. In this case, therefore, it will not matter which one we choose to use. 
+We see that the estimates for $\lambda_0$ and $\lambda_1$ correspond well with the maximum likelihood estimates $(\lambda_{0}, \lambda_{1})=(3.4657,9.3532)$ after we have correct for the bias, and that the variance does not affect the estimate.
 
 ## 4) 
 
 In this exercise we want to try to optimize the likelihood directly instead of using the EM-algorithm. First we need to find an analytical formula for $f_{Z_i,U_i}(z_i,u_i|\lambda_0,\lambda_1)$ and then try to find analytical formulas for the maximum likelihood estimators $\hat{\lambda}_0$ and $\hat{\lambda}_1$. 
+
+We start by looking at the case with $u_i=1$ and thus $z_i=x_i$. By integrating the joint pdf of $(x_i,y_i)$ over the corresponding domain we get 
+
+\begin{align*}
+  F_{Z_i}(z_i|u_i=1) &= P(Z_i\leq z_i,U_i=1)=P(X_i\leq z_i,Y_i\leq X_i) \\
+
+ &=\int_0^{z_i} \int_0^{x_i} f_{X_i}(x_i|\lambda_0)f_{Y_i}(y_i|\lambda_1) \text{dy}_i \text{dx}_i \\
+ &= \int_0^{z_i} \int_0^{x_i} \lambda_0 \lambda_1 e^{-\lambda_0x_i}e^{-\lambda_1y_i}\text{dy}_i \text{dx}_i \\
+ &=\int_0^{z_i} \lambda_0 e^{-\lambda_0x_i}(1-e^{-\lambda_1y_i}) \text{dx}_i.
+ \end{align*}
+
+By differentiating we find
+$$
+f_{Z_i}(z_i|u_i=1)=\frac{\text{d}F_{Z_i}(z_i|u_i=1)}{\text{d}z_i}=\lambda_0 e^{-\lambda_0z_i}(1-e^{-\lambda_1z_i}).
+$$
+We do the same for $u_i=0$, and find the joint pdf of $z_i$ and $u_i$ given $\lambda_0,\lambda_1$,
+$$
+f_{Z_i,U_i}(z_i,u_i|\lambda_0,\lambda_1)=
+\begin{cases} 
+\lambda_1 e^{-\lambda_1z_i}(1-e^{-\lambda_0z_i}), \quad u_i=0 \\
+\lambda_0 e^{-\lambda_0z_i}(1-e^{-\lambda_1z_i}), \quad u_i=1.
+\end{cases}
+$$
+
+Thus, we get the likelihood
+$$
+L(\lambda_0,\lambda_1|\mathbf{z},\mathbf{u}) = \prod_{i=0}^n f_{Z_i,U_i}(z_i,u_i|\lambda_0,\lambda_1) = \prod_{i:u_i=0}\lambda_1 e^{-\lambda_1z_i}(1-e^{-\lambda_0z_i})\prod_{i:u_i=1}\lambda_0 e^{-\lambda_0z_i}(1-e^{-\lambda_1z_i}).
+$$
+Hence, the log likelihood is 
+$$
+\begin{align*}
+l(\lambda_0,\lambda_1|\mathbf{z},\mathbf{u}) &= \sum_{i:u_i=0} \left(  \ln(\lambda_1)-\lambda_1z_i+\ln(1-e^{-\lambda_0z_i}) \right) + \sum_{i:u_i=1} \left(  \ln(\lambda_0)-\lambda_0z_i+\ln(1-e^{-\lambda_1z_i}) \right)\\
+&= n_0\ln(\lambda_1) + n_1 \ln(\lambda_0) +\sum_{i:u_i=0} \left(\ln(1-e^{-\lambda_0z_i})-\lambda_1z_i \right) + \sum_{i:u_i=1} \left(\ln(1-e^{-\lambda_1z_i})-\lambda_0z_i \right),
+\end{align*}
+$$
+where $n_0=\sum_{i=1}^n \text{I}(u_i=0)$ and $n_1=\sum_{i=1}^n \text{I}(u_i=1)$.
+
+To find the maximum likelihood estimators $\hat{\lambda}_0$ and $\hat{\lambda}_1$ we need to solve, 
+
+$$
+\frac{\partial l(\lambda_0,\lambda_1|\mathbf{z},\mathbf{u})}{\partial\lambda_0} = \frac{n_1}{\lambda_0} + \sum_{i:u_i=0} \frac{z_i e^{\lambda_0z_i}}{e^{\lambda_0z_i}-1} - \sum_{i:u_i=1} z_i =0
+$$ 
+and
+$$
+\frac{\partial l(\lambda_0,\lambda_1|\mathbf{z},\mathbf{u})}{\partial\lambda_1} = \frac{n_0}{\lambda_1} + \sum_{i:u_i=1} \frac{z_i e^{\lambda_0z_i}}{e^{\lambda_0z_i}-1} - \sum_{i:u_i=0} z_i =0.
+$$ 
+To be sure it is possible to solve the optimization problem, we find the Hessian
+$$
+\nabla^2l(\lambda_0,\lambda_1|\mathbf{z},\mathbf{u}) = \begin{bmatrix}
+-\frac{n_1}{\lambda_0^2} - \sum_{i:u_i=0}\frac{z_i^2e^{\lambda_0z_i}}{(e^{\lambda_0z_i}-1)^2} & 0 \\
+0 & -\frac{n_0}{\lambda_1^2} - \sum_{i:u_i=1}\frac{z_i^2e^{\lambda_1z_i}}{(e^{\lambda_1z_i}-1)^2}
+\end{bmatrix}.
+$$
+
+Since the Hessian is negative definite, there is only one maxima and it is possible to solve the optimization problem. We have solved the problem numerically with the $\texttt{optim}$ function in R. 
+
+```{r}
+l <- function(lambda){
+  index_0 <- which(u==0)
+  index_1 <- which(u==1)
+  n_0 <- length(index_0)
+  n_1 <- length(index_1)
+  likelihood <- n_0*log(lambda[2])+n_1*log(lambda[1])+sum(log(1-exp(-lambda[1]*z[index_0]))-lambda[2]*z[index_0])+sum( log(1-exp(-lambda[2]*z[index_1]))-lambda[1]*z[index_1])
+  return(likelihood)
+}
+
+optim(par=c(1,1),fn=l,control=list(fnscale=-1,maxit=1000))$par
+```
