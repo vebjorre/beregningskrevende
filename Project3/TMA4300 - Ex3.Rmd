@@ -207,10 +207,10 @@ The EM algorithm iterates between performing an expectation (E) step and a maxim
 We start by looking at the E-step and compute the conditional expectation 
 $$
 Q(\boldsymbol{\theta})
-=E\left[\ln f(\mathbf{x},\mathbf{y}\lvert  \boldsymbol{\theta})\lvert  \mathbf{z},\mathbf{u},\boldsymbol{\theta}^{(t)}\right]=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nE\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right] - \lambda_1\sum_{i=1}^nE\left[y_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]
+:=E\left[\ln f(\mathbf{x},\mathbf{y}\lvert  \boldsymbol{\theta})\lvert  \mathbf{z},\mathbf{u},\boldsymbol{\theta}^{(t)}\right]=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nE\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right] - \lambda_1\sum_{i=1}^nE\left[y_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]
 $$. 
 
-Thus, we need to find the $E\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$ and $E\left[y_i\lvert   z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$. The conditional probabilities of $x_i$ and $y_i$ given $z_i, u_i, \lambda_0^{(t)}, \lambda_1^{(t)}$ are given as. 
+Thus, we need to find the $E\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$ and $E\left[y_i\lvert   z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$. The conditional probabilities of $x_i$ and $y_i$ given $z_i, u_i, \lambda_0^{(t)}, \lambda_1^{(t)}$ are given as
 
 $$
 f(x_i \lvert z_i, u_i, \boldsymbol{\theta}^{(t)}) 
@@ -248,7 +248,7 @@ In the M-step we want to maximize the function $Q(\boldsymbol{\theta})$, found o
 
 By using
 $$
-\frac{dQ}{d\lambda_0}=0 \quad \frac{dQ}{d\lambda_1}=0,
+\frac{dQ}{d\lambda_0}=0 \quad \text{and } \quad \frac{dQ}{d\lambda_1}=0,
 $$
 we find the recursion
 $$
@@ -286,8 +286,8 @@ for (i in 2:ntimes){
 }
 
 #the maximum likelihood estimates for (lambda_0,lambda_1)
-lambda_mle <- lambda[ntimes,]
-cat("lambda_mle: ",lambda_mle)
+lambda_EM <- lambda[ntimes,]
+cat("lambda_EM: ",lambda_EM)
 
 #plot lambda as a function of steps
 plot(1:ntimes,lambda[,1],type="l", col="red",ylim=c(0,10),ylab="lambda",xlab="n")
@@ -326,7 +326,7 @@ B=10000
 
 EM<-function(z,u){
   norm <- 1
-  lambda <- lambda_mle
+  lambda <- lambda_EM
   while (norm >1e-12){
     lambda_old <- lambda
     lambda <- recursion(lambda,z,u)
@@ -347,27 +347,27 @@ for (b in 1:B){
 library(MASS)
 par(mfrow=c(1,2))
 truehist(lambda_b[,1],xlab="lambda_0")
-abline(v=lambda_mle[1],col="red")
+abline(v=lambda_EM[1],col="red")
 truehist(lambda_b[,2],xlab="lambda_1")
-abline(v=lambda_mle[2],col="red")
+abline(v=lambda_EM[2],col="red")
 
 #Find mean, sd, bias and corr
 mean_lambda <- colMeans(lambda_b)
 sd_lambda <- sqrt(diag(cov(lambda_b)))
-bias <- mean_lambda - lambda_mle
+bias <- mean_lambda - lambda_EM
 corr <- cor(lambda_b)[1, 2] 
 cat(" Mean: ",mean_lambda,"\n","Standard deviation: ",sd_lambda,"\n",
     "Bias: ",bias,"\n","Corr: ",corr,"\n")
 ```
 
-From the figure and the print out we see that the mean of the bootstrap samples is a bit different from the maximum likelihood estimates $(\lambda_0,\lambda_1)=(3.4657,9.3532)$. Both the standard deviation and the bias is significant, but the standard deviation is a bit larger and thus may affects the error in the estimate most. Because of this, we prefer the maximum likelihoods instead og the bias corrected estimates for $\lambda_0$ and $\lambda_1$. As expected, since $x_i$ and $y_i$ are independent random variables,is the correlation $\text{Corr}[\hat{\lambda}_0,\hat{\lambda}_1]$ very small. 
+From the figure and the print out we see that the mean of the bootstrap samples is a bit different from the maximum likelihood estimates $(\hat{\lambda}_{0_{EM}},\hat{\lambda}_{1_{EM}})=(3.4657,9.3532)$. Both the standard deviation and the bias is significant, but the standard deviation is a bit larger and thus may affects the error in the estimate most. Because of this, we prefer the maximum likelihoods instead og the bias corrected estimates for $\lambda_0$ and $\lambda_1$. As expected, since $x_i$ and $y_i$ are independent random variables,is the correlation $\text{Corr}[\hat{\lambda}_0^*,\hat{\lambda}_1^*]$ very small. 
 
 ```{r}
 #Bias corrected estimate
 bias_corrected_lambda <- mean_lambda - bias
 cat("Bias corrected estimate: ", bias_corrected_lambda)
 ```
-We see that the estimates for $\lambda_0$ and $\lambda_1$ correspond well with the maximum likelihood estimates $(\lambda_{0}, \lambda_{1})=(3.4657,9.3532)$ after we have correct for the bias, and with a large number of samples does not the variance affect the estimate.
+We see that the estimates for $\lambda_0$ and $\lambda_1$ correspond well with the maximum likelihood estimates $(\hat{\lambda}_{0_{EM}}, \hat{\lambda}_{1_{EM}})=(3.4657,9.3532)$ after we have correct for the bias, and with a large number of samples does not the variance affect the estimate.
 
 ## 4) 
 
@@ -442,7 +442,7 @@ l <- function(lambda){
 
 lambda_optim <-optim(par=c(1,1),fn=l,control=list(fnscale=-1,
       maxit=1000,reltol=1e-20))$par
-rbind(lambda_mle,lambda_optim)
+rbind(lambda_EM,lambda_optim)
 
 ```
 From the print out above can we see that the maximum likelihood estimate obtained by the EM algorithm and by optimizing directly are equal to at least 6 decimals. The advantages of oprimizing the likelihood directly compared to the EM algorithm are that you optimize the function of interest directly, instead of only approximating it, the standard errors are directly available and the convergence in the EM algorithm can be very slow. 
