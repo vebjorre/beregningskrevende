@@ -7,7 +7,7 @@ output: pdf_document
 
 # Problem A: Comparing $AR(2)$ parameter estimators using resampling of residuals
 
-In this exercise we analyse a dataset containing a sequence of length T=100 of a non-Gaussian time series.
+In this exercise we analyse a dataset containing a sequence of length $T=100$ of a non-Gaussian time series.
 ```{r}
 #Fetch data
 source("probAhelp.R")
@@ -190,7 +190,7 @@ The reported p-value is `r round(pval,4)` which is very close to the original p-
 We let $x_1,\dots,x_n$ and $y_1,\dots,y_n$ be independent random variables, where the $x_i$'s and $y_i$'s have an exponential distribution with intensity respectively $\lambda_0$ and $\lambda_1$. We assume that we do not observe $x_1,\dots,x_n$ and $y_1,\dots,y_n$ directly, but instead observe $z_i=\max(x_i,y_i)$ and $u_i=I(x_i\geq y_i)$ for $i=1,\dots,n$, where $I(\cdot)$ is the indicator function. Based on the observed $(z_i,u_i),i=1,\dots,n$ we will us the EM algorithm to find the maximum likelhood estimates for $\boldsymbol{\theta} = (\lambda_0,\lambda_1)$.
 
 ## 1)
-We start by finding the log likelihood function for the complete data $(x_i,y_i),i=1,\dots,n$.  Since $x_i$ and $y_i$ are assumed independent do we have 
+We start by finding the log likelihood function for the complete data $(x_i,y_i),i=1,\dots,n$.  Since $x_i$ and $y_i$ are assumed independent we have 
 $$
 f(\mathbf{x},\mathbf{y}\lvert  \boldsymbol{\theta})=\prod_{i=1}^n f(x_i\lvert  \lambda_0)f(y_i\lvert  \lambda_1) = \prod_{i=1}^n \lambda_0\lambda_1 \exp(-\lambda_0x_i) \exp(-\lambda_1y_i)
 $$
@@ -207,10 +207,10 @@ The EM algorithm iterates between performing an expectation (E) step and a maxim
 We start by looking at the E-step and compute the conditional expectation 
 $$
 Q(\boldsymbol{\theta})
-:=E\left[\ln f(\mathbf{x},\mathbf{y}\lvert  \boldsymbol{\theta})\lvert  \mathbf{z},\mathbf{u},\boldsymbol{\theta}^{(t)}\right]=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nE\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right] - \lambda_1\sum_{i=1}^nE\left[y_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]
-$$. 
+:=E\left[\ln f(\mathbf{x},\mathbf{y}\lvert  \boldsymbol{\theta})\lvert  \mathbf{z},\mathbf{u},\boldsymbol{\theta}^{(t)}\right]=n\ln(\lambda_0) + n\ln(\lambda_1) - \lambda_0\sum_{i=1}^nE\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right] - \lambda_1\sum_{i=1}^nE\left[y_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right].
+$$ 
 
-Thus, we need to find the $E\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$ and $E\left[y_i\lvert   z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$. The conditional probabilities of $x_i$ and $y_i$ given $z_i, u_i, \lambda_0^{(t)}, \lambda_1^{(t)}$ are given as
+Thus, we need to find $E\left[x_i\lvert  z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$ and $E\left[y_i\lvert   z_i,u_i,\boldsymbol{\theta}^{(t)}\right]$. The conditional probabilities of $x_i$ and $y_i$ given $z_i, u_i, \lambda_0^{(t)}, \lambda_1^{(t)}$ are given as
 
 $$
 f(x_i \lvert z_i, u_i, \boldsymbol{\theta}^{(t)}) 
@@ -244,7 +244,7 @@ $$
 $$
 
 ## 2) 
-In the M-step we want to maximize the function $Q(\boldsymbol{\theta})$, found on the E-step, to find the maximum likelihood estimates for $\boldsymbol{\theta}=(\lambda_0,\lambda_1)$. 
+In the M-step we want to maximize the function $Q(\boldsymbol{\theta})$, found in the E-step, to find the maximum likelihood estimates for $\boldsymbol{\theta}=(\lambda_0,\lambda_1)$. 
 
 By using
 $$
@@ -294,7 +294,7 @@ plot(1:ntimes,lambda[,1],type="l", col="red",ylim=c(0,10),ylab="lambda",xlab="n"
 lines(lambda[,2])
 ```
 
-From the plot can we see that the algorithm converges after a few iterations, and that the maximum likelihood estimates for $(\lambda_0,\lambda_1)$ is $(3.4657,9.3532)$. Now we want to visualise the convergence of the algorithm with the norm $||(\lambda_0^{(t)}, \lambda_1^{(t)}) - (\lambda_0^{(t-1)}, \lambda_1^{(t-1)}) ||$.
+From the plot can we see that the algorithm converges after a few iterations, and that the maximum likelihood estimates for $(\lambda_0,\lambda_1)$ are $(3.4657,9.3532)$. Now we want to visualise the convergence of the algorithm with the norm $||(\lambda_0^{(t)}, \lambda_1^{(t)}) - (\lambda_0^{(t-1)}, \lambda_1^{(t-1)}) ||$.
 
 ```{r}
 #Convergence plot
@@ -309,7 +309,7 @@ plot(1:(ntimes-1),norm, type="l", xlab="n",ylab="||theta(t)-theta(t-1)||")
 The convergence plot shows the same as mentioned above, the algorithm converges very quickly. 
 
 ## 3) 
-Now we want to use bootstrapping to estimate the standard deviations and the biases of each of $\hat{\lambda}_0$ and $\hat{\lambda}_1$ and to estimate the correlation $\text{Corr}[\hat{\lambda}_0,\hat{\lambda}_1]$. The pseudocode for our bootstrap algorithm is presented belov. We are interested in $\boldsymbol{\theta}^*_b(1),\dots,\boldsymbol{\theta}^*_b(B)$, which is the basis for estimating the distribution of $\hat{\boldsymbol{\theta}}$.
+Now we want to use bootstrapping to estimate the standard deviations and the biases of each of $\hat{\lambda}_0$ and $\hat{\lambda}_1$ and to estimate the correlation $\text{Corr}[\hat{\lambda}_0,\hat{\lambda}_1]$. The pseudocode for our bootstrap algorithm is presented below. We are interested in $\boldsymbol{\theta}^*_b(1),\dots,\boldsymbol{\theta}^*_b(B)$, which is the basis for estimating the distribution of $\hat{\boldsymbol{\theta}}$.
 
 $$
 \begin{aligned}
@@ -360,14 +360,14 @@ cat(" Mean: ",mean_lambda,"\n","Standard deviation: ",sd_lambda,"\n",
     "Bias: ",bias,"\n","Corr: ",corr,"\n")
 ```
 
-From the figure and the print out we see that the mean of the bootstrap samples is a bit different from the maximum likelihood estimates $(\hat{\lambda}_{0_{EM}},\hat{\lambda}_{1_{EM}})=(3.4657,9.3532)$. Both the standard deviation and the bias is significant, but the standard deviation is a bit larger and thus may affects the error in the estimate most. Because of this, we prefer the maximum likelihoods instead og the bias corrected estimates for $\lambda_0$ and $\lambda_1$. As expected, since $x_i$ and $y_i$ are independent random variables,is the correlation $\text{Corr}[\hat{\lambda}_0^*,\hat{\lambda}_1^*]$ very small. 
+From the figure and the print out we see that the mean of the bootstrap samples is a bit different from the maximum likelihood estimates $(\hat{\lambda}_{0_{EM}},\hat{\lambda}_{1_{EM}})=(3.4657,9.3532)$. Both the standard deviation and the bias are significant, but the standard deviation is a bit larger and thus may affect the error in the estimate the most. Because of this, we prefer the maximum likelihoods instead of the bias corrected estimates for $\lambda_0$ and $\lambda_1$. As expected, since $x_i$ and $y_i$ are independent random variables, the correlation $\text{Corr}[\hat{\lambda}_0^*,\hat{\lambda}_1^*]$ is very small. 
 
 ```{r}
 #Bias corrected estimate
 bias_corrected_lambda <- mean_lambda - bias
 cat("Bias corrected estimate: ", bias_corrected_lambda)
 ```
-We see that the estimates for $\lambda_0$ and $\lambda_1$ correspond well with the maximum likelihood estimates $(\hat{\lambda}_{0_{EM}}, \hat{\lambda}_{1_{EM}})=(3.4657,9.3532)$ after we have correct for the bias, and with a large number of samples does not the variance affect the estimate.
+We see that the estimates for $\lambda_0$ and $\lambda_1$ correspond well with the maximum likelihood estimates $(\hat{\lambda}_{0_{EM}}, \hat{\lambda}_{1_{EM}})=(3.4657,9.3532)$ after we have correct for the bias, and with a large number of samples the variance does not affect the estimate.
 
 ## 4) 
 
@@ -445,4 +445,4 @@ lambda_optim <-optim(par=c(1,1),fn=l,control=list(fnscale=-1,
 rbind(lambda_EM,lambda_optim)
 
 ```
-From the print out above can we see that the maximum likelihood estimate obtained by the EM algorithm and by optimizing directly are equal to at least 6 decimals. The advantages of oprimizing the likelihood directly compared to the EM algorithm are that you optimize the function of interest directly, instead of only approximating it, the standard errors are directly available and the convergence in the EM algorithm can be very slow. 
+From the print out above can we see that the maximum likelihood estimate obtained by the EM algorithm and by optimizing directly are equal to at least 6 decimals. The advantages of optimizing the likelihood directly compared to the EM algorithm are that you optimize the function of interest directly, instead of only approximating it, the standard errors are directly available and the convergence in the EM algorithm can be very slow. 
